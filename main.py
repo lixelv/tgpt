@@ -1,7 +1,9 @@
+import openai
+
+from dck import keep_alive
 from aiogram import Bot, Dispatcher, executor, types, utils
 from config import *
 from db_class import DB
-import openai
 from asyncio import to_thread
 
 bot = Bot(token_tg)
@@ -20,11 +22,15 @@ async def start_handler(message: types.Message):
 
 Создайте новый чат с помощью команды <strong>/nc (название бота)</strong>
 
-Выберете чат с помощью команды <strong>/cc</strong>
+Выберете чат с помощью команды <strong>/s</strong>
 
 Удалите активный чат с помощью команды <strong>/d</strong>
 
-Чтобы узнать активный чат введите команду /a
+Чтобы узнать активный чат введите команду <strong>/a</strong>
+
+Чтобы очистить активный чат введите команду <strong>/c</strong>
+
+Чтобы переименовать активный чат введите <strong>/r (новое имя)</strong>
 
 Чтобы использовать ChatGPT 3.5 просто напишите текстовый
 запрос боту например 'Расскажи интересный факт о космосе'
@@ -53,6 +59,30 @@ async def new_chat(message: types.Message):
     print(f'Создан чат {args} пользователем {message.from_user.username}, его id-{message.from_user.id}')
     d.add_chat(message.from_user.id, args)
     await message.answer(f'Добавлен чат: {args}')
+  
+@dp.message_handler(commands=['r', 'rc', 'r_c', 'rename_chat', 'renamechat', 'rename'])
+async def rename_chat(message: types.Message):
+  if d.chat_list(message.from_user.id) == []:
+      d.add_chat(message.from_user.id, 'start_chat')
+      print('Cоздан стандартный чат для ' + message.from_user.username)
+  args = message.get_args()
+  active_chat_id = d.active_chat_id(message.from_user.id)
+  active_chat = d.chat_from_id(active_chat_id)
+  print('Чат '+active_chat+' переиминован в '+args, message.from_user.username)
+  d.edit_chat_name(d.active_chat_id(message.from_user.id), args)
+  await message.answer('Чат '+active_chat+' переиминован в '+args)
+
+
+@dp.message_handler(commands=['c', 'clear', 'cc', 'c_c', 'clearchat', 'clear_chat'])
+async def clear_chat(message: types.Message):
+    if d.chat_list(message.from_user.id) == []:
+        d.add_chat(message.from_user.id, 'start_chat')
+        print('Cоздан стандартный чат для ' + message.from_user.username)
+    active_chat_id = d.active_chat_id(message.from_user.id)
+    active_chat = d.chat_from_id(active_chat_id)
+    print(f'Чат {active_chat} очищен {message.from_user.username}')
+    d.del_message(d.message_list(active_chat_id))
+    await message.answer(f'Чат {active_chat} очищен')
 
 
 @dp.message_handler(commands=['delete_chat', 'del_chat', 'd_c', 'deletechat', 'delchat', 'dc', 'delete', 'del', 'd'])
@@ -70,7 +100,7 @@ async def del_chat(message: types.Message):
         await message.answer('Ошибка, чата не существует')
 
 
-@dp.message_handler(commands=['choose_chat', 'c_c', 'cc', 'choosechat'])
+@dp.message_handler(commands=['select_chat', 's_c', 'sc', 'selectchat', 'select', 's'])
 async def choose_chat(message: types.Message):
     chat_list = d.chat_list(message.from_user.id)
     chat_name_list = d.chat_from_id(chat_list)
@@ -102,6 +132,7 @@ async def callback_handler(callback_query: types.CallbackQuery):
     print(f'Выбран чат: {d.chat_from_id(callback_query.data)} Пользователем: {callback_query.from_user.username}')
     await callback_query.message.edit_text(f'Выбран чат: {d.chat_from_id(callback_query.data)}')
 
-
+keep_alive()
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
+dp, skip_updates=True)

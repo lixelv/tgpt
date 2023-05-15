@@ -7,6 +7,12 @@ class DB:
         self.connect = sqlite3.connect(db_file)
         self.cursor = self.connect.cursor()
 
+    def edit_chat_name(self, chat_id, new_name):
+      self.cursor.execute('UPDATE chat SET name = ? WHERE id = ?', (new_name, chat_id))
+      self.connect.commit()
+
+  
+
     def user_exists(self, user_id):
         result = self.cursor.execute('SELECT `id` FROM user WHERE id = ?', (user_id,))
         return bool(len(result.fetchall()))
