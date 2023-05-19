@@ -6,10 +6,8 @@ from random import choice
 from webhook import webhook_pooling
 from aiogram import Bot, Dispatcher, types
 
-OWNER_ID: int = 1689863728
+OWNER_ID: int = os.environ['MYID']
 ADMIN_LIST: list = [OWNER_ID]
-
-d = DB('asset.sqlite3')
 
 bot = Bot(token_tg)
 Bot.set_current(bot)  # in some cases you might get exception that your current bot instance is not defined so this will solve your problem
@@ -194,4 +192,4 @@ async def callback_handler(callback_query: types.CallbackQuery):
 
 
 if __name__ == "__main__":
-    webhook_pooling(dp, token_tg, 8080, ADMIN_LIST)
+    webhook_pooling(dp, token_tg, 8400, ADMIN_LIST)

@@ -148,3 +148,5 @@ class DB:
 
     def close(self):
         self.connect.close()
+
+d = DB('asset.sqlite3')
