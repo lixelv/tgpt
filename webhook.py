@@ -24,6 +24,7 @@ def webhook_pooling(
         )
 
     async def on_startup(_):
+        await set_webhook()
         if isinstance(admin_list, list) and admin_list is not None:
             for admin_id in admin_list:
                 await bot.send_message(chat_id=admin_id, text=startup_message)
