@@ -1,5 +1,6 @@
 import openai
 
+import os
 from db_class import *
 from asyncio import to_thread
 from random import choice

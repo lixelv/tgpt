@@ -1,6 +1,6 @@
 import textwrap
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-f
+
 sticker_s = {
     'Hi': 'CAACAgIAAxkBAAIGsmRk5s_MYBOcUS6ItUTHXF417syzAAJxKwACQo3ASjypfvfFuI3SLwQ',
     'Loading': 'CAACAgIAAxkBAAIGuGRk5tAuE9s_TyADgQvd2rJioqIVAAItMAAC-cm5SlL0u9sCgWBtLwQ',
