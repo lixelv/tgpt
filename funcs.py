@@ -23,6 +23,7 @@ slash = '░░░░▒▒▒▒▒▒▓▓▓▓▓▓▓▓█████�
 sla_d = ''
 token_op = os.environ['OPENAI']
 token_tg = os.environ['TELEGRAM']
+port = os.environ['PORT']
 
 def inlinekeyboard(list_1, list_2) -> object:
     kb = InlineKeyboardMarkup(row_width=1)
