@@ -1,5 +1,6 @@
 import textwrap
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+import os
 
 sticker_s = {
     'Hi': 'CAACAgIAAxkBAAIGsmRk5s_MYBOcUS6ItUTHXF417syzAAJxKwACQo3ASjypfvfFuI3SLwQ',
@@ -20,10 +21,8 @@ phrases = [
 ]
 slash = '░░░░▒▒▒▒▒▒▓▓▓▓▓▓▓▓████████████████████████████████████████████████████▓▓▓▓▓▓▓▓▒▒▒▒▒▒░░░░\n'
 sla_d = ''
-# token_op = os.environ['OPENAI']
-# token_tg = os.environ['TELEGRAM']
-token_op = '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'
-token_tg = '5993940494:AAGY389dHNMIM1MrcwkBzTMJWkeDXtjIMV8'
+token_op = os.environ['OPENAI']
+token_tg = os.environ['TELEGRAM']
 
 def inlinekeyboard(list_1, list_2) -> object:
     kb = InlineKeyboardMarkup(row_width=1)

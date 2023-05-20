@@ -15,7 +15,7 @@ def webhook_pooling(
     Bot.set_current(bot)  # in some cases you might get exception that your current bot instance is not defined so this will solve your problem
     app = web.Application()  # that's our web-server AIOHTTP for handling concurrent requests from ngrok-Telegram API
 
-    webhook_path = f'https://xl4olam38h.execute-api.eu-north-1.amazonaws.com/tgpt/{token}'  # this is the path for your TOKEN_API 'URI'
+    webhook_path = f'{input("Введите url: ")}{token}'  # this is the path for your TOKEN_API 'URI'
 
     async def set_webhook():
         webhook_uri = webhook_path
