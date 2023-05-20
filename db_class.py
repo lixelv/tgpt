@@ -1,11 +1,17 @@
-import sqlite3
+import psycopg2
 from aiogram.types import Message, CallbackQuery
 from funcs import *
 
 class DB:
 
-    def __init__(self, db_file):
-        self.connect = sqlite3.connect(db_file)
+    def __init__(self, host, port, database, user, password):
+        self.connect = psycopg2.connect(
+                    host="your_hostname",
+                    port="your_port_number",
+                    database="your_database_name",
+                    user="your_username",
+                    password="your_password"
+                )
         self.cursor = self.connect.cursor()
 
     # region User 🧑🏻
@@ -148,5 +154,3 @@ class DB:
 
     def close(self):
         self.connect.close()
-
-d = DB('asset.sqlite3')
