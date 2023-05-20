@@ -12,6 +12,7 @@ ADMIN_LIST: list = [OWNER_ID]
 bot = Bot(token_tg)
 Bot.set_current(bot)  # in some cases you might get exception that your current bot instance is not defined so this will solve your problem
 dp = Dispatcher(bot)
+d = DB('asset.sqlite3')
 
 openai.api_key = token_op
 
