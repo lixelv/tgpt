@@ -1,19 +1,13 @@
-import openai
-from db_class import *
-from asyncio import to_thread
-from random import choice
+from url import *
+from db import DB
+from aiogram import types
 from webhook import webhook_pooling
-from aiogram import Bot, Dispatcher, types
+from aiogram.types import Message
+from random import choice
+from asyncio import to_thread
+import openai
 
-OWNER_ID: int = os.environ['MYID']
-ADMIN_LIST: list = [OWNER_ID]
-
-bot = Bot(token_tg)
-Bot.set_current(bot)  # in some cases you might get exception that your current bot instance is not defined so this will solve your problem
-dp = Dispatcher(bot)
-d = DB('asset.sqlite3')
-
-openai.api_key = token_op
+d = DB('gpt.sqlite3')
 
 # region Admin
 # @dp.message_handler(lambda message: message.from_user.id in ADMIN_ID, commands=['start'])
@@ -23,42 +17,22 @@ openai.api_key = token_op
 
 @dp.message_handler(commands=['start', 'help'])
 async def start_handler(message: types.Message):
-    if message.get_command() == 'start':
+    if message.get_command() == '/start':
         await message.answer_sticker(sticker_s['Hi'])
     await bot.send_message(
         message.from_user.id,
-        """
-Привет я <strong>ChatGPT_3.5</strong>
-Я был разработан @simeonlimon, при возникновении проблем обращайтесь
-
-Создайте новый чат с помощью команды <strong>/nc (название бота)</strong>
-
-Выберете чат с помощью команды <strong>/s</strong>
-
-Удалите активный чат с помощью команды <strong>/d</strong>
-
-Чтобы узнать активный чат введите команду <strong>/a</strong>
-
-Чтобы очистить активный чат введите команду <strong>/c</strong>
-
-Чтобы переименовать активный чат введите <strong>/r (новое имя)</strong>
-
-Чтобы использовать ChatGPT 3.5 просто напишите текстовый
-запрос боту например 'Расскажи интересный факт о космосе'
-        """,
+        hello if message.get_command() == '/start' else help,
         parse_mode='HTML'
     )
     if not d.user_exists(message):
         d.add_user(message)
 
-
-@dp.message_handler(commands=['t', 'mt', 'tokens', 'token', 'm_t', 'max_tokens'])
-async def max_tokens(message: types.Message):
-    d.edit_max_token(message)
-    await message.answer(f'max кол-во токенов изменено на {message.get_args()}')
+@dp.message_handler(commands=['t', 'token', 'tok'])
+async def token(message: types.Message):
+    await message.answer(f'Вы использовали {d.token(message)} токенов')
 
 
-@dp.message_handler(commands=['desc', 'cd', 'chat_description', 'c_d', 'chatdescripion'])
+@dp.message_handler(commands=['description', 'cd', 'chat_description', 'c_d', 'chatdescripion'])
 async def bot_description(message: types.Message):
     d.system_message_update(message)
     await message.answer(f'Описание бота было изменено на {message.get_args() if message.get_args() != "" else "You are a smart, helpful, kind, nice, good and very friendly assistant."}')
@@ -111,7 +85,7 @@ async def del_chat(message: types.Message):
 async def choose_chat(message: types.Message):
     chat_list_id = d.chat_list_id(message)
     chat_list_name = d.chat_list_name(message)
-    kb = inlinekeyboard(chat_list_name, chat_list_id)
+    kb = inline(chat_list_name, chat_list_id)
     await message.answer('Выберите чат:', reply_markup=kb)
 
 
@@ -121,8 +95,7 @@ async def choose_chat(message: types.Message):
     msg = await message.answer('Обработка истории 🔄')
     content = await to_thread(openai.ChatCompletion.create,
                               model="gpt-3.5-turbo",
-                              messages=d.message_data(chat_id=active_chat_id, message=message) + [{'role': 'user', 'content': 'What we was talking about? Please answer me on russian language, your answer need to be short'}],
-                              max_tokens=None
+                              messages=d.message_data(chat_id=active_chat_id, message=message) + [{'role': 'user', 'content': 'What we was talking about? Please answer me on russian language, your answer need to be short'}]
                               )
     print(f'{slash}Обработка истории 🔄 для {message.from_user.username}, использовано {sla_d}')
     await msg.delete()
@@ -139,7 +112,6 @@ async def message(message: types.Message):
     content = await to_thread(openai.ChatCompletion.create,
                               model="gpt-3.5-turbo",
                               messages=d.message_data(chat_id=active_chat_id, message=message),
-                              max_tokens=d.max_token(message)
                               )
     d.add_message(active_chat_id, content)
     await msg.delete()
@@ -167,7 +139,6 @@ async def send_sticker(message: Message):
         'photo',
         'poll',
         'sticker',
-        'text',
         'venue',
         'video',
         'video_note',
@@ -175,9 +146,8 @@ async def send_sticker(message: Message):
     ]
 )
 async def else_(message: Message):
-    print(f'{slash}Ошибка{sla_d}')
-    await message.answer(choice(phrases))
     await message.answer_sticker(sticker_s['Error'])
+    await message.answer(choice(phrases))
     print(message.content_type)
 
 # endregion
@@ -192,4 +162,4 @@ async def callback_handler(callback_query: types.CallbackQuery):
 
 
 if __name__ == "__main__":
-    webhook_pooling(dp, token_tg, port, ADMIN_LIST)
+    webhook_pooling(dp, environ['TELEGRAM'], environ['PORT'], environ['MYID'])

@@ -1,13 +1,13 @@
 from aiogram import Bot, Dispatcher, types
 from aiohttp import web
+from os import environ
 
 
 def webhook_pooling(
         dp: Dispatcher = None, token: str = None, port: int = None,  # these parameters are really important
         admin_list=None,  # in case you didn't write parameter admin_list nothing scary, same with startup and shutdown messages
         startup_message: str = 'Бот ChatGPT 3.5 был запущен! ☠️ ❱ 👾 ❱ 🤖',
-        shutdown_message: str = 'Бот ChatGPT 3.5 был выключен. 🤖 ❱ 👾 ❱ ☠️',
-        user_name='simeonlimon'
+        shutdown_message: str = 'Бот ChatGPT 3.5 был выключен. 🤖 ❱ 👾 ❱ ☠️'
 ):
     if admin_list is None:
         admin_list: list = []
@@ -15,7 +15,7 @@ def webhook_pooling(
     Bot.set_current(bot)  # in some cases you might get exception that your current bot instance is not defined so this will solve your problem
     app = web.Application()  # that's our web-server AIOHTTP for handling concurrent requests from ngrok-Telegram API
 
-    webhook_path = f'{input("Введите url: ")}{token}'  # this is the path for your TOKEN_API 'URI'
+    webhook_path = f'{environ["LINK"]}/{token}'  # this is the path for your TOKEN_API 'URI'
 
     async def set_webhook():
         webhook_uri = webhook_path
