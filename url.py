@@ -48,7 +48,7 @@ slash = '░░░░▒▒▒▒▒▒▓▓▓▓▓▓▓▓█████�
 
 sla_d = ''
 
-openai.api_key = environ['OPENAI']
+op = environ['OPENAI'].split(',')
 token = environ['TELEGRAM']
 bot = Bot(token)
 dp = Dispatcher(bot)
@@ -63,6 +63,11 @@ def inline(list_keys: list, list_data: list,
         buttons.append(InlineKeyboardButton(key, callback_data=data))
     kb.add(*buttons)
     return kb
+
+def onetoto(lis: list):
+    lis.append(lis[0])
+    lis.remove(lis[0])
+    return lis
 
 def pprint(str):
     str_ = textwrap.wrap(str, width=len(slash))

@@ -91,6 +91,9 @@ async def choose_chat(message: types.Message):
 
 @dp.message_handler(commands=['chat_history', 'history', 'c_h', 'ch', 'h'])
 async def choose_chat(message: types.Message):
+    global op
+    openai.api_key = op[0]
+    op = onetoto(op)
     active_chat_id = d.active_chat_id(message)
     msg = await message.answer('Обработка истории 🔄')
     content = await to_thread(openai.ChatCompletion.create,
@@ -105,6 +108,9 @@ async def choose_chat(message: types.Message):
 
 @dp.message_handler(content_types='text')
 async def message(message: types.Message):
+    global op
+    openai.api_key = op[0]
+    op = onetoto(op)
     active_chat_id = d.active_chat_id(message)
     d.add_message(active_chat_id, message=message)
     msg = await message.answer('Генерация ответа 🔄')
