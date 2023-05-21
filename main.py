@@ -1,8 +1,6 @@
-from url import *
-from db import DB
+from db import *
 from aiogram import types
 from webhook import webhook_pooling
-from aiogram.types import Message
 from random import choice
 from asyncio import to_thread
 import openai
