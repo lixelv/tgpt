@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
 from db import *
 from aiogram import types
 from webhook import webhook_pooling
 from random import choice
 from asyncio import to_thread
 import openai
+
 
 d = DB('gpt.sqlite3')
 
@@ -33,7 +35,7 @@ async def token(message: types.Message):
 @dp.message_handler(commands=['description', 'cd', 'chat_description', 'c_d', 'chatdescripion'])
 async def bot_description(message: types.Message):
     d.system_message_update(message)
-    await message.answer(f'Описание бота было изменено на {message.get_args() if message.get_args() != "" else "You are a smart, helpful, kind, nice, good and very friendly assistant."}')
+    await message.answer(f'Описание бота было изменено на {message.get_args() if message.get_args() != "" else "You are a smart, helpful, kind, nice, good and very friendly assistant"}')
 
 
 @dp.message_handler(commands=['a', 'active', 'ac', 'activechat', 'a_c', 'active_chat'])
@@ -90,37 +92,33 @@ async def choose_chat(message: types.Message):
 @dp.message_handler(commands=['chat_history', 'history', 'c_h', 'ch', 'h'])
 async def choose_chat(message: types.Message):
     global op
-    openai.api_key = op[0]
-    op = onetoto(op)
     active_chat_id = d.active_chat_id(message)
-    msg = await message.answer('Обработка истории 🔄')
     content = await to_thread(openai.ChatCompletion.create,
                               model="gpt-3.5-turbo",
-                              messages=d.message_data(chat_id=active_chat_id, message=message) + [{'role': 'user', 'content': 'What we was talking about? Please answer me on russian language, your answer need to be short'}]
+                              messages=d.message_data(chat_id=active_chat_id, message=message) + [{'role': 'user', 'content': 'What we was talking about? Please answer me on russian language, your answer need to be short'}],
+                              api_key=op[0]
                               )
-    print(f'{slash}Обработка истории 🔄 для {message.from_user.username}, использовано {sla_d}')
-    await msg.delete()
+    op = onetoto(op)
+    print(f'{slash}Обработка истории 🔄 для {message.from_user.username}, использовано {sla_d}\n token = {openai.api_key}')
     d.token_used(message, content)
-    await message.reply(content['choices'][0]['message']['content'])
+    await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
 
 
 @dp.message_handler(content_types='text')
 async def message(message: types.Message):
     global op
-    openai.api_key = op[0]
-    op = onetoto(op)
     active_chat_id = d.active_chat_id(message)
     d.add_message(active_chat_id, message=message)
-    msg = await message.answer('Генерация ответа 🔄')
-    print(f'{slash}Генерация ответа 🔄 для {message.from_user.username}{sla_d}')
+    print(f'{slash}Генерация ответа 🔄 для {message.from_user.username}{sla_d}\n{openai.api_key=}')
     content = await to_thread(openai.ChatCompletion.create,
                               model="gpt-3.5-turbo",
                               messages=d.message_data(chat_id=active_chat_id, message=message),
+                              api_key=op[0]
                               )
+    op = onetoto(op)
     d.add_message(active_chat_id, content)
-    await msg.delete()
     d.token_used(message, content)
-    await message.reply(content['choices'][0]['message']['content'])
+    await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
 
 
 @dp.message_handler(content_types=["sticker"])

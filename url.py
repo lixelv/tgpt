@@ -2,7 +2,6 @@ from aiogram import Bot, Dispatcher
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from os import environ
 import textwrap
-import sys
 
 hello = """
 Привет я <strong>ChatGPT_3.5</strong> был разработан @simeonlimon
@@ -54,8 +53,6 @@ bot = Bot(token)
 dp = Dispatcher(bot)
 port = environ['PORT']
 
-sys.stdout = open('output.txt', 'w')
-sys.stderr = sys.stdout
 
 def inline(list_keys: list, list_data: list,
            width: int = 2):
