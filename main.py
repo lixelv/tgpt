@@ -44,7 +44,7 @@ async def active_chat(message: types.Message):
     await message.answer(f'Ваш активный чат: {active_chat_name}')
 
 
-@dp.message_handler(commands=['new_chat', 'n_c', 'nc', 'newchat'])
+@dp.message_handler(commands=['new_chat', 'n_c', 'nc', 'newchat', 'new', 'n'])
 async def new_chat(message: types.Message):
     args = message.get_args()
     d.add_chat(message)
