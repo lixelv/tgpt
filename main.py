@@ -1,4 +1,5 @@
 from db import *
+from parse_weather import get_weather
 from aiogram import types
 from webhook import webhook_pooling
 from random import choice
@@ -90,37 +91,43 @@ async def choose_chat(message: types.Message):
 @dp.message_handler(commands=['chat_history', 'history', 'c_h', 'ch', 'h'])
 async def choose_chat(message: types.Message):
     global op
-    openai.api_key = op[0]
-    op = onetoto(op)
     active_chat_id = d.active_chat_id(message)
-    msg = await message.answer('Обработка истории 🔄')
-    content = await to_thread(openai.ChatCompletion.create,
+    msg = await message.answer('Обработка истории 🔄', disable_notification=False)
+    try:
+        content = await to_thread(openai.ChatCompletion.create,
                               model="gpt-3.5-turbo",
-                              messages=d.message_data(chat_id=active_chat_id, message=message) + [{'role': 'user', 'content': 'What we was talking about? Please answer me on russian language, your answer need to be short'}]
+                              messages=d.message_data(chat_id=active_chat_id, message=message) + [{'role': 'user', 'content': 'What we was talking about? Please answer me on russian language, your answer need to be short'}],
+                              api_key=op[0]
                               )
-    print(f'{slash}Обработка истории 🔄 для {message.from_user.username}, использовано {sla_d}')
-    await msg.delete()
-    d.token_used(message, content)
-    await message.reply(content['choices'][0]['message']['content'])
+        op = onetoto(op)
+        print(f"{slash}Обработка истории 🔄 для {message.from_user.username}, использовано {content['usage']['total_tokens']} {sla_d}")
+        await msg.delete()
+        d.token_used(message, content)
+        await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
+    except:
+        await msg.delete()
 
 
 @dp.message_handler(content_types='text')
 async def message(message: types.Message):
     global op
-    openai.api_key = op[0]
-    op = onetoto(op)
     active_chat_id = d.active_chat_id(message)
     d.add_message(active_chat_id, message=message)
-    msg = await message.answer('Генерация ответа 🔄')
+    msg = await message.answer('Генерация ответа 🔄', disable_notification=False)
     print(f'{slash}Генерация ответа 🔄 для {message.from_user.username}{sla_d}')
-    content = await to_thread(openai.ChatCompletion.create,
-                              model="gpt-3.5-turbo",
-                              messages=d.message_data(chat_id=active_chat_id, message=message),
-                              )
-    d.add_message(active_chat_id, content)
-    await msg.delete()
-    d.token_used(message, content)
-    await message.reply(content['choices'][0]['message']['content'])
+    try:
+        content = await to_thread(openai.ChatCompletion.create,
+                                  model="gpt-3.5-turbo",
+                                  messages=d.message_data(chat_id=active_chat_id, message=message),
+                                  api_key=op[0]
+                                  )
+        op = onetoto(op)
+        d.add_message(active_chat_id, content)
+        await msg.delete()
+        d.token_used(message, content)
+        await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
+    except:
+        await msg.delete()
 
 
 @dp.message_handler(content_types=["sticker"])
@@ -128,6 +135,10 @@ async def send_sticker(message: Message):
     await message.answer_sticker(message.sticker.file_id)
     await message.answer(message.sticker.file_id)
     print(message.content_type)
+
+@dp.message_handler(content_types=["location"])
+async def weather(message: Message):
+    await message.answer(get_weather(message.location.latitude, message.location.longitude))
 
 # endregion
 # region Other
@@ -139,7 +150,6 @@ async def send_sticker(message: Message):
         'document',
         'game',
         'invoice',
-        'location',
         'photo',
         'poll',
         'sticker',

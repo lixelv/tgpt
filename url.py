@@ -54,8 +54,10 @@ bot = Bot(token)
 dp = Dispatcher(bot)
 port = environ['PORT']
 
-sys.stdout = open('output.txt', 'w')
-sys.stderr = sys.stdout
+with open('output.txt', 'w') as f:
+    sys.stdout = f
+sys.stdout = sys.__stdout__
+
 
 def inline(list_keys: list, list_data: list,
            width: int = 2):
@@ -66,18 +68,21 @@ def inline(list_keys: list, list_data: list,
     kb.add(*buttons)
     return kb
 
+
 def onetoto(lis: list):
     lis.append(lis[0])
     lis.remove(lis[0])
     return lis
+
 
 def pprint(str):
     str_ = textwrap.wrap(str, width=len(slash))
     for line in str_:
         print(line)
 
+
 def warp(text):
-    wrapped_text = textwrap.wrap(text, width=len(slash)-2)
+    wrapped_text = textwrap.wrap(text, width=len(slash) - 2)
     result = ''
     for i in wrapped_text:
         result += i + '\n'
