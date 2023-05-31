@@ -14,6 +14,18 @@ d = DB('gpt.sqlite3')
 # endregion
 # region User
 
+@dp.message_handler(lambda message: d.is_blocked(message))
+async def love(message: types.Message):
+    await message.answer('Иди нахуй, ты забанен блядь!')
+
+@dp.message_handler(commands=['b', 'block'])
+async def set_block(message: types.Message):
+    if message.from_user.id == int(environ['MYID']):
+        d.block_user(message)
+        await message.answer(f'Пользователь с id {message.get_args()} заблокирован')
+    else:
+        await message.answer('Ты не админ!')
+
 @dp.message_handler(commands=['start', 'help'])
 async def start_handler(message: types.Message):
     if message.get_command() == '/start':
@@ -108,7 +120,7 @@ async def choose_chat(message: types.Message):
         await msg.delete()
 
 
-@dp.message_handler(content_types='text')
+@dp.message_handler(content_types=['text'])
 async def message(message: types.Message):
     global op
     active_chat_id = d.active_chat_id(message)

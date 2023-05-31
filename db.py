@@ -41,7 +41,9 @@ CREATE TABLE IF NOT EXISTS user (
     bot_description TEXT     NOT NULL
                              DEFAULT ('You are a helpful assistant.'),
     token_used      INTEGER  DEFAULT (0) 
-                             NOT NULL
+                             NOT NULL,
+    block           BOOL     NOT NULL
+                             CONSTRAINT [0] DEFAULT (0) 
 );""")
         self.connect.commit()
 
@@ -64,6 +66,15 @@ CREATE TABLE IF NOT EXISTS user (
         self.cursor.execute('UPDATE user SET bot_description = ? WHERE id = ?', (args, message.from_user.id))
         self.connect.commit()
         pprint(f'{slash}Пользователь {message.from_user.username} изменил описание бота на {args}{sla_d}')
+        
+    def block_user(self, message: Message):
+        self.cursor.execute('UPDATE user SET block = 1 WHERE id = ?', (message.get_args(),))
+        self.connect.commit()
+        pprint(f'{slash}Пользователь {message.from_user.username} заблокирован{sla_d}')
+
+    def is_blocked(self, message: Message):
+        self.cursor.execute('SELECT block FROM user WHERE id = ?', (message.from_user.id,))
+        return bool(self.cursor.fetchone()[0])
 
     # endregion
     # region Chat 📝
