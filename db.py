@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS user (
 
     def is_blocked(self, message: Message):
         self.cursor.execute('SELECT block FROM user WHERE id = ?', (message.from_user.id,))
-        return bool(self.cursor.fetchone()[0])
+        return bool(self.cursor.fetchone())
 
     # endregion
     # region Chat 📝
