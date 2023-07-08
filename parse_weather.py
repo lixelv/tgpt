@@ -1,12 +1,12 @@
 import requests
-from os import environ
+from url import weather
 import datetime
 
 
 
 def get_weather(lat: float, lon: float):
     try:
-        r = requests.get(f'https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&units=metric&lang=RU&appid={environ["WEATHER"]}')
+        r = requests.get(f'https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&units=metric&lang=RU&appid={weather}')
         data = r.json()
         return f'Погода: {data["weather"][0]["description"]}\n' \
         f'Сейчас температура: {data["main"]["temp"]}C°\n' \

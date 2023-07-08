@@ -20,7 +20,7 @@ async def love(message: types.Message):
 
 @dp.message_handler(commands=['b', 'block'])
 async def set_block(message: types.Message):
-    if message.from_user.id == int(environ['MYID']):
+    if message.from_user.id == int(my_id):
         d.block_user(message)
         await message.answer(f'Пользователь с id {message.get_args()} заблокирован')
     else:
@@ -188,4 +188,4 @@ async def callback_handler(callback_query: types.CallbackQuery):
 
 
 if __name__ == "__main__":
-    webhook_pooling(dp, environ['TELEGRAM'], environ['PORT'], environ['MYID'])
+    webhook_pooling(dp, port, link)

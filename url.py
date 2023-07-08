@@ -1,6 +1,6 @@
 from aiogram import Bot, Dispatcher
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from os import environ
+from envparse import env
 import textwrap
 import sys
 
@@ -48,11 +48,16 @@ slash = '░░░░▒▒▒▒▒▒▓▓▓▓▓▓▓▓█████�
 
 sla_d = ''
 
-op = environ['OPENAI'].split(',')
-token = environ['TELEGRAM']
+
+env.read_envfile('.env')
+op = env('OPENAI').split(',')
+token = env('TELEGRAM')
+my_id = env('MYID')
+port = env('PORT')
+link = env('LINK')
+weather = env('WEATHER')
 bot = Bot(token)
 dp = Dispatcher(bot)
-port = environ['PORT']
 
 with open('output.txt', 'w') as f:
     sys.stdout = f

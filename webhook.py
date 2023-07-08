@@ -1,64 +1,78 @@
-from aiogram import Bot, Dispatcher, types
+from aiogram import Dispatcher, types
 from aiohttp import web
-from os import environ
-
 
 def webhook_pooling(
-        dp: Dispatcher = None, token: str = None, port: int = None,  # these parameters are really important
-        admin_list=None,  # in case you didn't write parameter admin_list nothing scary, same with startup and shutdown messages
-        startup_message: str = 'Бот ChatGPT 3.5 был запущен! ☠️ ❱ 👾 ❱ 🤖',
-        shutdown_message: str = 'Бот ChatGPT 3.5 был выключен. 🤖 ❱ 👾 ❱ ☠️'
+        dp: Dispatcher = None,
+        port: int | str = None,
+        link: str = None,
+        admin_list: list | int | str = None,
+        startup_message: str = 'Бот был запущен! ☠️ ❱ 👾 ❱ 🤖',
+        shutdown_message: str = 'Бот был выключен. 🤖 ❱ 👾 ❱ ☠️'
 ):
-    if admin_list is None:
-        admin_list: list = []
-    bot = Bot(token=token)
-    Bot.set_current(bot)  # in some cases you might get exception that your current bot instance is not defined so this will solve your problem
-    app = web.Application()  # that's our web-server AIOHTTP for handling concurrent requests from ngrok-Telegram API
+    # Create a bot instance with the provided token
+    bot = dp.bot
+    token = bot._token
 
-    webhook_path = f'{environ["LINK"]}/{token}'  # this is the path for your TOKEN_API 'URI'
+    # Create an aiohttp web application
+    app = web.Application()
 
-    async def set_webhook():
-        webhook_uri = webhook_path
-        await bot.set_webhook(
-            webhook_uri  # here we are telling our Telegram API to use the WEBHOOK
-        )
+    # Construct the webhook path using the provided link and token
+    webhook_path = f'{link}/{token}'
+    print(webhook_path)
 
-    async def on_startup(_):
-        await set_webhook()
-        if isinstance(admin_list, list) and admin_list is not None:
-            for admin_id in admin_list:
-                await bot.send_message(chat_id=admin_id, text=startup_message)
-        elif isinstance(admin_list, (str, int)):
-            await bot.send_message(chat_id=admin_list, text=startup_message)
+    # Add a POST route to handle incoming webhooks
+    app.router.add_post(f'/{token}', lambda request: handle_webhook(request, token, dp))
 
-        else:
-            pass
+    # Register the on_startup and on_shutdown handlers
+    app.on_startup.append(lambda _: on_startup(dp, startup_message, admin_list, webhook_path))
+    app.on_shutdown.append(lambda _: on_shutdown(dp, shutdown_message, admin_list))
 
-    async def on_shutdown(_):
-        if isinstance(admin_list, list) and admin_list != []:
-            for admin_id in admin_list:
-                await bot.send_message(chat_id=admin_id, text=shutdown_message)
-        elif isinstance(admin_list, (str, int)):
-            await bot.send_message(chat_id=admin_list, text=shutdown_message)
-
-    async def handle_webhook(request):
-        url = str(request.url)
-        index = url.rfind('/')
-        token_ = url[index + 1:]  # this method is used because in some cases request object can't be correctly interpreted and match_info will return empty object
-        if token_ == token:
-            update = types.Update(**await request.json())  # we just parse our bytes into dictionary
-            await dp.process_update(update)  # this will just process update using the appropriate handler
-            return web.Response()  # construct the response object
-        else:
-            return web.Response(status=403)  # if our TOKEN is not authenticated
-
-    app.router.add_post(f'/{token}', handle_webhook)  # here we set router for process each webhook http request through our handler_
-
-    app.on_startup.append(on_startup)
-    app.on_shutdown.append(on_shutdown)
-
+    # Run the web application
     web.run_app(
         app,
         host='0.0.0.0',
         port=port
     )
+
+
+async def handle_webhook(request, token, dp):
+    # Extract the token from the URL
+    url = str(request.url)
+    index = url.rfind('/')
+    token_ = url[index + 1:]
+
+    # Verify if the extracted token matches the provided token
+    if token_ == token:
+        # Process the incoming update using the Dispatcher
+        update = types.Update(**await request.json())
+        await dp.process_update(update)
+
+        # Return a success response
+        return web.Response()
+    else:
+        # Return a forbidden response if the tokens do not match
+        return web.Response(status=403)
+
+
+async def start_shutdown(bot, text: str = None, admin_list: tuple | set | list | str | int = None):
+    # Check if the text and admin_list parameters are provided
+    if text is not None and admin_list is not None:
+        # Check the type of admin_list and send a message accordingly
+        if isinstance(admin_list, (tuple, set, list)):
+            for admin_id in admin_list:
+                await bot.send_message(chat_id=admin_id, text=text)
+        elif isinstance(admin_list, (str, int)):
+            await bot.send_message(chat_id=admin_list, text=text)
+
+
+async def on_startup(dp, startup_message, admin_list, webhook_path):
+    # Set the webhook path for the bot
+    await dp.bot.set_webhook(webhook_path)
+
+    # Send the startup message to the specified admin_list
+    await start_shutdown(dp.bot, startup_message, admin_list)
+
+
+async def on_shutdown(dp, shutdown_message, admin_list):
+    # Send the shutdown message to the specified admin_list
+    await start_shutdown(dp.bot, shutdown_message, admin_list)
