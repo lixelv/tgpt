@@ -104,7 +104,7 @@ async def choose_chat(message: types.Message):
 async def choose_chat(message: types.Message):
     global op
     active_chat_id = d.active_chat_id(message)
-    msg = await message.answer('Обработка истории 🔄', disable_notification=False)
+    msg = await message.answer('Обработка истории 🔄', disable_notification=True)
     try:
         func = partial(
             create_chat_completion, 
@@ -126,7 +126,7 @@ async def message(message: types.Message):
     global op
     active_chat_id = d.active_chat_id(message)
     d.add_message(active_chat_id, message=message)
-    msg = await message.answer('Генерация ответа 🔄', disable_notification=False)
+    msg = await message.answer('Генерация ответа 🔄', disable_notification=True)
     print(f'{slash}Генерация ответа 🔄 для {message.from_user.username}{sla_d}')
     try:
         func = partial(
