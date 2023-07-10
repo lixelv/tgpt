@@ -44,15 +44,14 @@ CREATE TABLE IF NOT EXISTS user (
                              DEFAULT ('You are a helpful assistant.'),
     token_used      INTEGER  DEFAULT (0) 
                              NOT NULL,
-    block           BOOL     NOT NULL
-                             CONSTRAINT [0] DEFAULT (0) 
+    block           INTEGER
 );""")
         self.connect.commit()
 
     # region User 🧑🏻
     def user_exists(self, message: Message):
         result = self.cursor.execute('SELECT `id` FROM user WHERE id = ?', (message.from_user.id,))
-        return bool(len(result.fetchall()))
+        return bool(result.fetchall())
 
     def add_user(self, message: Message):
         self.cursor.execute('INSERT INTO user(id, name) VALUES(?,?)', (message.from_user.id, message.from_user.username))
@@ -76,7 +75,7 @@ CREATE TABLE IF NOT EXISTS user (
 
     def is_blocked(self, message: Message):
         self.cursor.execute('SELECT block FROM user WHERE id = ?', (message.from_user.id,))
-        return bool(self.cursor.fetchone())
+        return bool(self.cursor.fetchone()[0])
 
     # endregion
     # region Chat 📝
@@ -198,8 +197,8 @@ from parse_weather import get_weather
 from aiogram import types
 from webhook import webhook_pooling
 from random import choice
-from asyncio import to_thread
-import openai
+from functools import partial
+import asyncio
 
 d = DB('gpt.sqlite3')
 
@@ -208,18 +207,6 @@ d = DB('gpt.sqlite3')
 # async def admin_start(message: types.Message):
 # endregion
 # region User
-
-@dp.message_handler(lambda message: d.is_blocked(message))
-async def love(message: types.Message):
-    await message.answer('Иди нахуй, ты забанен блядь!')
-
-@dp.message_handler(commands=['b', 'block'])
-async def set_block(message: types.Message):
-    if message.from_user.id == int(my_id):
-        d.block_user(message)
-        await message.answer(f'Пользователь с id {message.get_args()} заблокирован')
-    else:
-        await message.answer('Ты не админ!')
 
 @dp.message_handler(commands=['start', 'help'])
 async def start_handler(message: types.Message):
@@ -232,6 +219,18 @@ async def start_handler(message: types.Message):
     )
     if not d.user_exists(message):
         d.add_user(message)
+
+@dp.message_handler(lambda message: d.is_blocked(message))
+async def love(message: types.Message):
+    await message.answer('Вы заблокированы!')
+
+@dp.message_handler(commands=['b', 'block'])
+async def set_block(message: types.Message):
+    if message.from_user.id == int(my_id):
+        d.block_user(message)
+        await message.answer(f'Пользователь с id {message.get_args()} заблокирован')
+    else:
+        await message.answer('Ты не админ!')
 
 @dp.message_handler(commands=['t', 'token', 'tok'])
 async def token(message: types.Message):
@@ -299,13 +298,14 @@ async def choose_chat(message: types.Message):
 async def choose_chat(message: types.Message):
     global op
     active_chat_id = d.active_chat_id(message)
-    msg = await message.answer('Обработка истории 🔄', disable_notification=False)
+    msg = await message.answer('Обработка истории 🔄', disable_notification=True)
     try:
-        content = await to_thread(openai.ChatCompletion.create,
-                              model="gpt-3.5-turbo",
-                              messages=d.message_data(chat_id=active_chat_id, message=message) + [{'role': 'user', 'content': 'What we was talking about? Please answer me on russian language, your answer need to be short'}],
-                              api_key=op[0]
-                              )
+        func = partial(
+            create_chat_completion, 
+            op[0], 
+            d.message_data(chat_id=active_chat_id, message=message) + [{'role': 'user', 'content': 'What we was talking about? Please answer me on russian language, your answer need to be short'}]
+        )
+        content = await asyncio.get_event_loop().run_in_executor(None, func)
         op = onetoto(op)
         print(f"{slash}Обработка истории 🔄 для {message.from_user.username}, использовано {content['usage']['total_tokens']} {sla_d}")
         await msg.delete()
@@ -320,14 +320,15 @@ async def message(message: types.Message):
     global op
     active_chat_id = d.active_chat_id(message)
     d.add_message(active_chat_id, message=message)
-    msg = await message.answer('Генерация ответа 🔄', disable_notification=False)
+    msg = await message.answer('Генерация ответа 🔄', disable_notification=True)
     print(f'{slash}Генерация ответа 🔄 для {message.from_user.username}{sla_d}')
     try:
-        content = await to_thread(openai.ChatCompletion.create,
-                                  model="gpt-3.5-turbo",
-                                  messages=d.message_data(chat_id=active_chat_id, message=message),
-                                  api_key=op[0]
-                                  )
+        func = partial(
+            create_chat_completion, 
+            op[0], 
+            d.message_data(chat_id=active_chat_id, message=message)
+        )
+        content = await asyncio.get_event_loop().run_in_executor(None, func)
         op = onetoto(op)
         d.add_message(active_chat_id, content)
         await msg.delete()
@@ -383,7 +384,7 @@ async def callback_handler(callback_query: types.CallbackQuery):
 
 
 if __name__ == "__main__":
-    webhook_pooling(dp, port, link)
+    webhook_pooling(dp, port, link, [my_id])
 ```
 parse_weather.py:
 ```python
@@ -414,6 +415,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from envparse import env
 import textwrap
 import sys
+import openai
 
 hello = """
 Привет я <strong>ChatGPT_3.5</strong> был разработан @simeonlimon
@@ -468,12 +470,19 @@ port = env('PORT')
 link = env('LINK')
 weather = env('WEATHER')
 bot = Bot(token)
+Bot.set_current(bot)
 dp = Dispatcher(bot)
 
 with open('output.txt', 'w') as f:
     sys.stdout = f
 sys.stdout = sys.__stdout__
 
+def create_chat_completion(api_key, messages):
+    return openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=messages,
+        api_key=api_key
+    )
 
 def inline(list_keys: list, list_data: list,
            width: int = 2):
@@ -585,4 +594,5 @@ async def on_startup(dp, startup_message, admin_list, webhook_path):
 async def on_shutdown(dp, shutdown_message, admin_list):
     # Send the shutdown message to the specified admin_list
     await start_shutdown(dp.bot, shutdown_message, admin_list)
+
 ```
