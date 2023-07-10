@@ -42,15 +42,14 @@ CREATE TABLE IF NOT EXISTS user (
                              DEFAULT ('You are a helpful assistant.'),
     token_used      INTEGER  DEFAULT (0) 
                              NOT NULL,
-    block           BOOL     NOT NULL
-                             CONSTRAINT [0] DEFAULT (0) 
+    block           INTEGER
 );""")
         self.connect.commit()
 
     # region User 🧑🏻
     def user_exists(self, message: Message):
         result = self.cursor.execute('SELECT `id` FROM user WHERE id = ?', (message.from_user.id,))
-        return bool(len(result.fetchall()))
+        return bool(result.fetchall())
 
     def add_user(self, message: Message):
         self.cursor.execute('INSERT INTO user(id, name) VALUES(?,?)', (message.from_user.id, message.from_user.username))
@@ -74,7 +73,7 @@ CREATE TABLE IF NOT EXISTS user (
 
     def is_blocked(self, message: Message):
         self.cursor.execute('SELECT block FROM user WHERE id = ?', (message.from_user.id,))
-        return bool(self.cursor.fetchone())
+        return bool(self.cursor.fetchone()[0])
 
     # endregion
     # region Chat 📝

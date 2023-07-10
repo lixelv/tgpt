@@ -3,8 +3,8 @@ from parse_weather import get_weather
 from aiogram import types
 from webhook import webhook_pooling
 from random import choice
-from asyncio import to_thread
-import openai
+from functools import partial
+import asyncio
 
 d = DB('gpt.sqlite3')
 
@@ -13,18 +13,6 @@ d = DB('gpt.sqlite3')
 # async def admin_start(message: types.Message):
 # endregion
 # region User
-
-@dp.message_handler(lambda message: d.is_blocked(message))
-async def love(message: types.Message):
-    await message.answer('Иди нахуй, ты забанен блядь!')
-
-@dp.message_handler(commands=['b', 'block'])
-async def set_block(message: types.Message):
-    if message.from_user.id == int(my_id):
-        d.block_user(message)
-        await message.answer(f'Пользователь с id {message.get_args()} заблокирован')
-    else:
-        await message.answer('Ты не админ!')
 
 @dp.message_handler(commands=['start', 'help'])
 async def start_handler(message: types.Message):
@@ -37,6 +25,18 @@ async def start_handler(message: types.Message):
     )
     if not d.user_exists(message):
         d.add_user(message)
+
+@dp.message_handler(lambda message: d.is_blocked(message))
+async def love(message: types.Message):
+    await message.answer('Вы заблокированы!')
+
+@dp.message_handler(commands=['b', 'block'])
+async def set_block(message: types.Message):
+    if message.from_user.id == int(my_id):
+        d.block_user(message)
+        await message.answer(f'Пользователь с id {message.get_args()} заблокирован')
+    else:
+        await message.answer('Ты не админ!')
 
 @dp.message_handler(commands=['t', 'token', 'tok'])
 async def token(message: types.Message):
@@ -106,11 +106,12 @@ async def choose_chat(message: types.Message):
     active_chat_id = d.active_chat_id(message)
     msg = await message.answer('Обработка истории 🔄', disable_notification=False)
     try:
-        content = await to_thread(openai.ChatCompletion.create,
-                              model="gpt-3.5-turbo",
-                              messages=d.message_data(chat_id=active_chat_id, message=message) + [{'role': 'user', 'content': 'What we was talking about? Please answer me on russian language, your answer need to be short'}],
-                              api_key=op[0]
-                              )
+        func = partial(
+            create_chat_completion, 
+            op[0], 
+            d.message_data(chat_id=active_chat_id, message=message) + [{'role': 'user', 'content': 'What we was talking about? Please answer me on russian language, your answer need to be short'}]
+        )
+        content = await asyncio.get_event_loop().run_in_executor(None, func)
         op = onetoto(op)
         print(f"{slash}Обработка истории 🔄 для {message.from_user.username}, использовано {content['usage']['total_tokens']} {sla_d}")
         await msg.delete()
@@ -128,11 +129,12 @@ async def message(message: types.Message):
     msg = await message.answer('Генерация ответа 🔄', disable_notification=False)
     print(f'{slash}Генерация ответа 🔄 для {message.from_user.username}{sla_d}')
     try:
-        content = await to_thread(openai.ChatCompletion.create,
-                                  model="gpt-3.5-turbo",
-                                  messages=d.message_data(chat_id=active_chat_id, message=message),
-                                  api_key=op[0]
-                                  )
+        func = partial(
+            create_chat_completion, 
+            op[0], 
+            d.message_data(chat_id=active_chat_id, message=message)
+        )
+        content = await asyncio.get_event_loop().run_in_executor(None, func)
         op = onetoto(op)
         d.add_message(active_chat_id, content)
         await msg.delete()
@@ -188,4 +190,4 @@ async def callback_handler(callback_query: types.CallbackQuery):
 
 
 if __name__ == "__main__":
-    webhook_pooling(dp, port, link)
+    webhook_pooling(dp, port, link, [my_id])

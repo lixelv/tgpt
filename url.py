@@ -3,6 +3,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from envparse import env
 import textwrap
 import sys
+import openai
 
 hello = """
 Привет я <strong>ChatGPT_3.5</strong> был разработан @simeonlimon
@@ -57,12 +58,19 @@ port = env('PORT')
 link = env('LINK')
 weather = env('WEATHER')
 bot = Bot(token)
+Bot.set_current(bot)
 dp = Dispatcher(bot)
 
 with open('output.txt', 'w') as f:
     sys.stdout = f
 sys.stdout = sys.__stdout__
 
+def create_chat_completion(api_key, messages):
+    return openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=messages,
+        api_key=api_key
+    )
 
 def inline(list_keys: list, list_data: list,
            width: int = 2):
