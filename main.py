@@ -5,6 +5,7 @@ from webhook import webhook_pooling
 from random import choice
 from functools import partial
 import asyncio
+import openai
 
 d = DB('gpt.sqlite3')
 
@@ -101,17 +102,18 @@ async def choose_chat(message: types.Message):
 
 
 @dp.message_handler(commands=['chat_history', 'history', 'c_h', 'ch', 'h'])
-async def choose_chat(message: types.Message):
+async def chat_history(message: types.Message):
+    asyncio.create_task(handle_chat_history(message))
+
+async def handle_chat_history(message: types.Message):
     global op
     active_chat_id = d.active_chat_id(message)
     msg = await message.answer('Обработка истории 🔄', disable_notification=True)
     try:
-        func = partial(
-            create_chat_completion, 
-            op[0], 
-            d.message_data(chat_id=active_chat_id, message=message) + [{'role': 'user', 'content': 'What we was talking about? Please answer me on russian language, your answer need to be short'}]
-        )
-        content = await asyncio.get_event_loop().run_in_executor(None, func)
+        content = await openai.ChatCompletion.acreate(
+            model="gpt-3.5-turbo",
+            messages=d.message_data(chat_id=active_chat_id, message=message) + [{'role': 'user', 'content': 'What we was talking about? Please answer me on russian language, your answer need to be short'}],
+            api_key=op[0])
         op = onetoto(op)
         print(f"{slash}Обработка истории 🔄 для {message.from_user.username}, использовано {content['usage']['total_tokens']} {sla_d}")
         await msg.delete()
@@ -123,18 +125,19 @@ async def choose_chat(message: types.Message):
 
 @dp.message_handler(content_types=['text'])
 async def message(message: types.Message):
+    asyncio.create_task(handle_message(message))
+
+async def handle_message(message: types.Message):
     global op
     active_chat_id = d.active_chat_id(message)
     d.add_message(active_chat_id, message=message)
     msg = await message.answer('Генерация ответа 🔄', disable_notification=True)
     print(f'{slash}Генерация ответа 🔄 для {message.from_user.username}{sla_d}')
     try:
-        func = partial(
-            create_chat_completion, 
-            op[0], 
-            d.message_data(chat_id=active_chat_id, message=message)
-        )
-        content = await asyncio.get_event_loop().run_in_executor(None, func)
+        content = await openai.ChatCompletion.acreate(
+            model="gpt-3.5-turbo",
+            messages=d.message_data(chat_id=active_chat_id, message=message),
+            api_key=op[0])
         op = onetoto(op)
         d.add_message(active_chat_id, content)
         await msg.delete()
