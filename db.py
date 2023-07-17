@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS user (
         pprint(f'{slash}\nЧат {self.chat_name_from_id(chat_id)} переименован в {message.get_args()}, {message.from_user.username}{sla_d}')
 
     def add_chat(self, message: Message, start_chat=True):
-        if self.chat_list_id(message) != []:
+        if self.chat_list_id(message):
             self.cursor.execute('UPDATE chat SET active = 0 WHERE active = 1 and user_id = ?', (message.from_user.id,),)
         if start_chat:
             self.cursor.execute('INSERT INTO chat(user_id, name) VALUES(?,?)', (message.from_user.id, message.get_args()))
@@ -93,8 +93,8 @@ CREATE TABLE IF NOT EXISTS user (
             self.cursor.execute('INSERT INTO chat(user_id, name) VALUES(?,?)', (message.from_user.id, 'start_chat'))
         self.connect.commit()
 
-    def chat_list_id(self, message: Message = None, id = None):
-        result = self.cursor.execute('SELECT id FROM chat WHERE user_id = ?', (message.from_user.id,) if id == None else (id,))
+    def chat_list_id(self, message: Message = None, id=None):
+        result = self.cursor.execute('SELECT id FROM chat WHERE user_id = ?', (message.from_user.id,) if id is None else (id,))
         return [row[0] for row in result.fetchall()]
 
     def chat_list_name(self, message: Message):
@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS user (
         return [row[0] for row in result.fetchall()]
 
     def start_chat(self, message: Message):
-        if self.chat_list_id(message) == []:
+        if not self.chat_list_id(message):
             self.add_chat(message, False)
             pprint(f'{slash}Cоздан стандартный чат для {message.from_user.username}{sla_d}')
 
@@ -146,7 +146,7 @@ CREATE TABLE IF NOT EXISTS user (
         self.cursor.execute('SELECT * FROM message WHERE chat_id = ?', (chat_id,))
         return len(self.cursor.fetchall())
 
-    def add_message(self, chat_id, content = None, role='assistant', message: Message = None):
+    def add_message(self, chat_id, content=None, role='assistant', message: Message = None):
         if self.message_count(chat_id) >= 4:
             self.cursor.execute('SELECT MIN(id) FROM message WHERE chat_id = ?', (chat_id,))
             to_del_id = self.cursor.fetchone()[0]
@@ -160,7 +160,7 @@ CREATE TABLE IF NOT EXISTS user (
         result = self.cursor.execute('SELECT id FROM message WHERE chat_id = ?', (chat_id,))
         return [row[0] for row in result]
 
-    def message_data(self, message: Message = None, chat_id = None):
+    def message_data(self, message: Message = None, chat_id=None):
         result = [{'role': 'system', 'content': self.system_message(message)}]
         data = self.cursor.execute('SELECT text, role FROM message WHERE chat_id = ?', (chat_id,))
         for row in data.fetchall():

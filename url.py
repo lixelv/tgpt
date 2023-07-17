@@ -3,7 +3,6 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from envparse import env
 import textwrap
 import sys
-import openai
 
 hello = """
 Привет я <strong>ChatGPT_3.5</strong> был разработан @simeonlimon
@@ -12,7 +11,7 @@ hello = """
 Чтобы узнать о командах напишите <strong>/help</strong>
         """
 
-help = """
+help_ = """
 Создайте новый чат командой <strong>/new_chat (название чата)</strong>
 Переименуйте активный чат командой <strong>/rename (новое имя)</strong>
 Узнайте название активного чата командой <strong>/active</strong>
@@ -65,12 +64,6 @@ with open('output.txt', 'w') as f:
     sys.stdout = f
 sys.stdout = sys.__stdout__
 
-def create_chat_completion(api_key, messages):
-    return openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=messages,
-        api_key=api_key
-    )
 
 def inline(list_keys: list, list_data: list,
            width: int = 2):
@@ -88,8 +81,8 @@ def onetoto(lis: list):
     return lis
 
 
-def pprint(str):
-    str_ = textwrap.wrap(str, width=len(slash))
+def pprint(_str_):
+    str_ = textwrap.wrap(_str_, width=len(slash))
     for line in str_:
         print(line)
 
