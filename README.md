@@ -216,7 +216,7 @@ async def start_handler(message: types.Message):
         await message.answer_sticker(sticker_s['Hi'])
     await bot.send_message(
         message.from_user.id,
-        hello if message.get_command() == '/start' else help,
+        hello if message.get_command() == '/start' else help_,
         parse_mode='HTML'
     )
     if not d.user_exists(message):
