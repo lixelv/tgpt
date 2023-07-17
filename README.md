@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS user (
         pprint(f'{slash}\nЧат {self.chat_name_from_id(chat_id)} переименован в {message.get_args()}, {message.from_user.username}{sla_d}')
 
     def add_chat(self, message: Message, start_chat=True):
-        if self.chat_list_id(message) != []:
+        if self.chat_list_id(message):
             self.cursor.execute('UPDATE chat SET active = 0 WHERE active = 1 and user_id = ?', (message.from_user.id,),)
         if start_chat:
             self.cursor.execute('INSERT INTO chat(user_id, name) VALUES(?,?)', (message.from_user.id, message.get_args()))
@@ -95,8 +95,8 @@ CREATE TABLE IF NOT EXISTS user (
             self.cursor.execute('INSERT INTO chat(user_id, name) VALUES(?,?)', (message.from_user.id, 'start_chat'))
         self.connect.commit()
 
-    def chat_list_id(self, message: Message = None, id = None):
-        result = self.cursor.execute('SELECT id FROM chat WHERE user_id = ?', (message.from_user.id,) if id == None else (id,))
+    def chat_list_id(self, message: Message = None, id=None):
+        result = self.cursor.execute('SELECT id FROM chat WHERE user_id = ?', (message.from_user.id,) if id is None else (id,))
         return [row[0] for row in result.fetchall()]
 
     def chat_list_name(self, message: Message):
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS user (
         return [row[0] for row in result.fetchall()]
 
     def start_chat(self, message: Message):
-        if self.chat_list_id(message) == []:
+        if not self.chat_list_id(message):
             self.add_chat(message, False)
             pprint(f'{slash}Cоздан стандартный чат для {message.from_user.username}{sla_d}')
 
@@ -148,7 +148,7 @@ CREATE TABLE IF NOT EXISTS user (
         self.cursor.execute('SELECT * FROM message WHERE chat_id = ?', (chat_id,))
         return len(self.cursor.fetchall())
 
-    def add_message(self, chat_id, content = None, role='assistant', message: Message = None):
+    def add_message(self, chat_id, content=None, role='assistant', message: Message = None):
         if self.message_count(chat_id) >= 4:
             self.cursor.execute('SELECT MIN(id) FROM message WHERE chat_id = ?', (chat_id,))
             to_del_id = self.cursor.fetchone()[0]
@@ -162,7 +162,7 @@ CREATE TABLE IF NOT EXISTS user (
         result = self.cursor.execute('SELECT id FROM message WHERE chat_id = ?', (chat_id,))
         return [row[0] for row in result]
 
-    def message_data(self, message: Message = None, chat_id = None):
+    def message_data(self, message: Message = None, chat_id=None):
         result = [{'role': 'system', 'content': self.system_message(message)}]
         data = self.cursor.execute('SELECT text, role FROM message WHERE chat_id = ?', (chat_id,))
         for row in data.fetchall():
@@ -189,6 +189,7 @@ CREATE TABLE IF NOT EXISTS user (
 
     def close(self):
         self.connect.close()
+
 ```
 main.py:
 ```python
@@ -393,20 +394,20 @@ from url import weather
 import datetime
 
 
-
 def get_weather(lat: float, lon: float):
     try:
         r = requests.get(f'https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&units=metric&lang=RU&appid={weather}')
         data = r.json()
         return f'Погода: {data["weather"][0]["description"]}\n' \
-        f'Сейчас температура: {data["main"]["temp"]}C°\n' \
-        f'Скорость ветра: {data["wind"]["speed"]} м/с\n' \
-        f'Влажность: {data["main"]["humidity"]}%\n' \
-        f'Давление: {data["main"]["pressure"]} мм\n' \
-        f'Восход: {datetime.datetime.fromtimestamp(data["sys"]["sunrise"]).strftime("%H:%M:%S")}\n' \
-        f'Закат: {datetime.datetime.fromtimestamp(data["sys"]["sunset"]).strftime("%H:%M:%S")}'
+               f'Сейчас температура: {data["main"]["temp"]}C°\n' \
+               f'Скорость ветра: {data["wind"]["speed"]} м/с\n' \
+               f'Влажность: {data["main"]["humidity"]}%\n' \
+               f'Давление: {data["main"]["pressure"]} мм\n' \
+               f'Восход: {datetime.datetime.fromtimestamp(data["sys"]["sunrise"]).strftime("%H:%M:%S")}\n' \
+               f'Закат: {datetime.datetime.fromtimestamp(data["sys"]["sunset"]).strftime("%H:%M:%S")}'
     except Exception as err:
-        return 'Ошибка: {err}'
+        return f'Ошибка: {err}'
+
 ```
 url.py:
 ```python
@@ -415,7 +416,6 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from envparse import env
 import textwrap
 import sys
-import openai
 
 hello = """
 Привет я <strong>ChatGPT_3.5</strong> был разработан @simeonlimon
@@ -424,7 +424,7 @@ hello = """
 Чтобы узнать о командах напишите <strong>/help</strong>
         """
 
-help = """
+help_ = """
 Создайте новый чат командой <strong>/new_chat (название чата)</strong>
 Переименуйте активный чат командой <strong>/rename (новое имя)</strong>
 Узнайте название активного чата командой <strong>/active</strong>
@@ -477,12 +477,6 @@ with open('output.txt', 'w') as f:
     sys.stdout = f
 sys.stdout = sys.__stdout__
 
-def create_chat_completion(api_key, messages):
-    return openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=messages,
-        api_key=api_key
-    )
 
 def inline(list_keys: list, list_data: list,
            width: int = 2):
@@ -500,8 +494,8 @@ def onetoto(lis: list):
     return lis
 
 
-def pprint(str):
-    str_ = textwrap.wrap(str, width=len(slash))
+def pprint(_str_):
+    str_ = textwrap.wrap(_str_, width=len(slash))
     for line in str_:
         print(line)
 
