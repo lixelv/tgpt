@@ -316,7 +316,7 @@ async def handle_chat_history(message: types.Message):
         await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
     except:
         await msg.delete()
-        asyncio.create_task(handle_chat_history(message))
+        await handle_chat_history(message)
         
 
 @dp.message_handler(content_types=['text'])
@@ -341,7 +341,7 @@ async def handle_message(message: types.Message):
         await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
     except:
         await msg.delete()
-        asyncio.create_task(handle_message(message))
+        await handle_message(message)
 
 
 @dp.message_handler(content_types=["sticker"])
