@@ -1,6 +1,6 @@
 from db import *
 from parse_weather import get_weather
-from aiogram import types
+from aiogram import types, exceptions
 from webhook import webhook_pooling
 from random import choice
 from functools import partial
@@ -116,13 +116,18 @@ async def handle_chat_history(message: types.Message):
             api_key=op[0])
         op = onetoto(op)
         print(f"{slash}Обработка истории 🔄 для {message.from_user.username}, использовано {content['usage']['total_tokens']} {sla_d}")
-        await msg.delete()
+        try:
+            await msg.delete()
+        except exceptions.MessageToDeleteNotFound:
+            pass
         d.token_used(message, content)
         await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
     except:
-        await msg.delete()
+        try:
+            await msg.delete()
+        except exceptions.MessageToDeleteNotFound:
+            pass
         await handle_chat_history(message)
-        
 
 @dp.message_handler(content_types=['text'])
 async def message(message: types.Message):
@@ -141,13 +146,18 @@ async def handle_message(message: types.Message):
             api_key=op[0])
         op = onetoto(op)
         d.add_message(active_chat_id, content)
-        await msg.delete()
+        try:
+            await msg.delete()
+        except exceptions.MessageToDeleteNotFound:
+            pass
         d.token_used(message, content)
         await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
     except:
-        await msg.delete()
+        try:
+            await msg.delete()
+        except exceptions.MessageToDeleteNotFound:
+            pass
         await handle_message(message)
-
 
 @dp.message_handler(content_types=["sticker"])
 async def send_sticker(message: Message):
