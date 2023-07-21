@@ -303,26 +303,22 @@ async def chat_history(message: types.Message):
 async def handle_chat_history(message: types.Message):
     global op
     active_chat_id = d.active_chat_id(message)
-    msg = await message.answer('Обработка истории 🔄', disable_notification=True)
+    d.add_message(active_chat_id, message=message)
+    msg = await message.answer('Генерация ответа 🔄', disable_notification=True)
+    print(f'{slash}Генерация ответа 🔄 для {message.from_user.username}{sla_d}')
     try:
         content = await openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo",
             messages=d.message_data(chat_id=active_chat_id, message=message) + [{'role': 'user', 'content': 'What we was talking about? Please answer me on russian language, your answer need to be short'}],
             api_key=op[0])
         op = onetoto(op)
-        print(f"{slash}Обработка истории 🔄 для {message.from_user.username}, использовано {content['usage']['total_tokens']} {sla_d}")
-        try:
-            await msg.delete()
-        except exceptions.MessageToDeleteNotFound:
-            pass
+        d.add_message(active_chat_id, content)
         d.token_used(message, content)
         await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
+        await msg.delete()
     except:
-        try:
-            await msg.delete()
-        except exceptions.MessageToDeleteNotFound:
-            pass
-        await handle_chat_history(message)
+        await msg.delete()
+        await handle_message(message)
 
 @dp.message_handler(content_types=['text'])
 async def message(message: types.Message):
@@ -341,19 +337,12 @@ async def handle_message(message: types.Message):
             api_key=op[0])
         op = onetoto(op)
         d.add_message(active_chat_id, content)
-        try:
-            await msg.delete()
-        except exceptions.MessageToDeleteNotFound:
-            pass
         d.token_used(message, content)
         await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
+        await msg.delete()
     except:
-        try:
-            await msg.delete()
-        except exceptions.MessageToDeleteNotFound:
-            pass
+        await msg.delete()
         await handle_message(message)
-
 
 @dp.message_handler(content_types=["sticker"])
 async def send_sticker(message: Message):
@@ -402,6 +391,8 @@ async def callback_handler(callback_query: types.CallbackQuery):
 
 if __name__ == "__main__":
     webhook_pooling(dp, port, link, [my_id])
+    
+
 ```
 parse_weather.py:
 ```python
