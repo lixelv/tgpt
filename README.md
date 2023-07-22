@@ -195,7 +195,7 @@ main.py:
 ```python
 from db import *
 from parse_weather import get_weather
-from aiogram import types, exceptions
+from aiogram import types, exceptions, executor
 from webhook import webhook_pooling
 from random import choice
 from functools import partial
@@ -302,23 +302,29 @@ async def chat_history(message: types.Message):
 
 async def handle_chat_history(message: types.Message):
     global op
-    active_chat_id = d.active_chat_id(message)
+    active_chat_id = d.active_chat_id(message, active_chat_id)
     d.add_message(active_chat_id, message=message)
     msg = await message.answer('Генерация ответа 🔄', disable_notification=True)
     print(f'{slash}Генерация ответа 🔄 для {message.from_user.username}{sla_d}')
+
+    content = await get_chat_history(message)
+    d.add_message(active_chat_id, content)
+    d.token_used(message, content)
+    await msg.delete()
+    await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
+
+async def get_chat_history(message: types.Message, active_chat_id):
+    global op
     try:
         content = await openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo",
             messages=d.message_data(chat_id=active_chat_id, message=message) + [{'role': 'user', 'content': 'What we was talking about? Please answer me on russian language, your answer need to be short'}],
             api_key=op[0])
         op = onetoto(op)
-        d.add_message(active_chat_id, content)
-        d.token_used(message, content)
-        await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
-        await msg.delete()
+        return content
     except:
-        await msg.delete()
-        await handle_message(message)
+        content = await get_chat_history(message, active_chat_id)
+        return content
 
 @dp.message_handler(content_types=['text'])
 async def message(message: types.Message):
@@ -330,19 +336,26 @@ async def handle_message(message: types.Message):
     d.add_message(active_chat_id, message=message)
     msg = await message.answer('Генерация ответа 🔄', disable_notification=True)
     print(f'{slash}Генерация ответа 🔄 для {message.from_user.username}{sla_d}')
+
+    content = await get_message(message, active_chat_id)
+    d.add_message(active_chat_id, content)
+    d.token_used(message, content)
+    await msg.delete()
+    await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
+
+async def get_message(message: types.Message, active_chat_id):
+    global op
     try:
         content = await openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo",
             messages=d.message_data(chat_id=active_chat_id, message=message),
             api_key=op[0])
         op = onetoto(op)
-        d.add_message(active_chat_id, content)
-        d.token_used(message, content)
-        await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
-        await msg.delete()
+        return content
     except:
-        await msg.delete()
-        await handle_message(message)
+        content = await get_message(message, active_chat_id)
+        return content
+
 
 @dp.message_handler(content_types=["sticker"])
 async def send_sticker(message: Message):
@@ -390,7 +403,8 @@ async def callback_handler(callback_query: types.CallbackQuery):
 
 
 if __name__ == "__main__":
-    webhook_pooling(dp, port, link, [my_id])
+    #  webhook_pooling(dp, port, link, [my_id])
+    executor.start_polling(dp, skip_updates=True)
     
 
 ```
@@ -421,6 +435,7 @@ url.py:
 from aiogram import Bot, Dispatcher
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from envparse import env
+import openai
 import textwrap
 import sys
 
@@ -431,7 +446,7 @@ hello = """
 Чтобы узнать о командах напишите <strong>/help</strong>
         """
 
-help_ = """
+help = """
 Создайте новый чат командой <strong>/new_chat (название чата)</strong>
 Переименуйте активный чат командой <strong>/rename (новое имя)</strong>
 Узнайте название активного чата командой <strong>/active</strong>
@@ -484,6 +499,13 @@ with open('output.txt', 'w') as f:
     sys.stdout = f
 sys.stdout = sys.__stdout__
 
+def create_chat_completion(api_key, messages):
+    return openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=messages,
+        api_key=api_key
+    )
+
 
 def inline(list_keys: list, list_data: list,
            width: int = 2):
@@ -501,8 +523,8 @@ def onetoto(lis: list):
     return lis
 
 
-def pprint(_str_):
-    str_ = textwrap.wrap(_str_, width=len(slash))
+def pprint(str):
+    str_ = textwrap.wrap(str, width=len(slash))
     for line in str_:
         print(line)
 

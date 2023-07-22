@@ -107,23 +107,29 @@ async def chat_history(message: types.Message):
 
 async def handle_chat_history(message: types.Message):
     global op
-    active_chat_id = d.active_chat_id(message)
+    active_chat_id = d.active_chat_id(message, active_chat_id)
     d.add_message(active_chat_id, message=message)
     msg = await message.answer('Генерация ответа 🔄', disable_notification=True)
     print(f'{slash}Генерация ответа 🔄 для {message.from_user.username}{sla_d}')
+
+    content = await get_chat_history(message)
+    d.add_message(active_chat_id, content)
+    d.token_used(message, content)
+    await msg.delete()
+    await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
+
+async def get_chat_history(message: types.Message, active_chat_id):
+    global op
     try:
         content = await openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo",
             messages=d.message_data(chat_id=active_chat_id, message=message) + [{'role': 'user', 'content': 'What we was talking about? Please answer me on russian language, your answer need to be short'}],
             api_key=op[0])
         op = onetoto(op)
-        d.add_message(active_chat_id, content)
-        d.token_used(message, content)
-        await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
-        await msg.delete()
+        return content
     except:
-        await msg.delete()
-        await handle_message(message)
+        content = await get_chat_history(message, active_chat_id)
+        return content
 
 @dp.message_handler(content_types=['text'])
 async def message(message: types.Message):
@@ -135,19 +141,26 @@ async def handle_message(message: types.Message):
     d.add_message(active_chat_id, message=message)
     msg = await message.answer('Генерация ответа 🔄', disable_notification=True)
     print(f'{slash}Генерация ответа 🔄 для {message.from_user.username}{sla_d}')
+
+    content = await get_message(message, active_chat_id)
+    d.add_message(active_chat_id, content)
+    d.token_used(message, content)
+    await msg.delete()
+    await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
+
+async def get_message(message: types.Message, active_chat_id):
+    global op
     try:
         content = await openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo",
             messages=d.message_data(chat_id=active_chat_id, message=message),
             api_key=op[0])
         op = onetoto(op)
-        d.add_message(active_chat_id, content)
-        d.token_used(message, content)
-        await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
-        await msg.delete()
+        return content
     except:
-        await msg.delete()
-        await handle_message(message)
+        content = await get_message(message, active_chat_id)
+        return content
+
 
 @dp.message_handler(content_types=["sticker"])
 async def send_sticker(message: Message):
