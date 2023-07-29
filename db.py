@@ -147,11 +147,6 @@ CREATE TABLE IF NOT EXISTS user (
         return len(self.cursor.fetchall())
 
     def add_message(self, chat_id, content=None, role='assistant', message: Message = None):
-        if self.message_count(chat_id) >= 4:
-            self.cursor.execute('SELECT MIN(id) FROM message WHERE chat_id = ?', (chat_id,))
-            to_del_id = self.cursor.fetchone()[0]
-            self.cursor.execute('DELETE FROM message WHERE id = (SELECT MIN(id) FROM message WHERE chat_id = ?)', (chat_id,))
-            print(f'{slash}Сообщение {to_del_id} было удалено{sla_d}')
         self.cursor.execute('INSERT INTO message(chat_id, text, role) VALUES(?,?,?)', (chat_id, content['choices'][0]['message']['content'], role) if message is None else (chat_id, message.text, 'user'))
         self.connect.commit()
         print(f"{slash}Сообщение, содержание:\n```\n{warp(str(content['choices'][0]['message']['content']))}\n``` {role}, used: {content['usage']['total_tokens']}{sla_d}" if message is None else f"{slash}Сообщение, содержание:\n```\n{warp(str(message.text))}\n``` user: {message.from_user.username}{sla_d}")
@@ -162,7 +157,7 @@ CREATE TABLE IF NOT EXISTS user (
 
     def message_data(self, message: Message = None, chat_id=None):
         result = [{'role': 'system', 'content': self.system_message(message)}]
-        data = self.cursor.execute('SELECT text, role FROM message WHERE chat_id = ?', (chat_id,))
+        data = self.cursor.execute('SELECT text, role FROM message WHERE chat_id = ? ORDER BY id DESC LIMIT 4;', (chat_id,))
         for row in data.fetchall():
             result.append({'role': row[1], 'content': row[0]})
         return result
