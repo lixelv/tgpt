@@ -147,12 +147,16 @@ async def handle_message(message: types.Message):
 
 async def get_message(message: types.Message):
     global op
-    content = await openai.ChatCompletion.acreate(
-        model="gpt-3.5-turbo",
-        messages=d.message_data(message=message),
-        api_key=op[0])
-    op = onetoto(op)
-    return content
+    try:
+        content = await openai.ChatCompletion.acreate(
+            model="gpt-3.5-turbo",
+            messages=d.message_data(message=message),
+            api_key=op[0])
+        op = onetoto(op)
+        return content
+    except:
+        content = await get_message(message)
+        return content
 
 
 @dp.message_handler(content_types=["sticker"])
