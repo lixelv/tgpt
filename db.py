@@ -160,6 +160,7 @@ CREATE TABLE IF NOT EXISTS user (
         data = self.cursor.execute('SELECT text, role FROM message WHERE chat_id = ? ORDER BY id LIMIT 4;', (chat_id,))
         for row in data.fetchall():
             result.append({'role': row[1], 'content': row[0]})
+            print(result)
         return result
 
     def del_message(self, id):
