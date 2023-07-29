@@ -110,22 +110,22 @@ async def handle_chat_history(message: types.Message):
     msg = await message.answer('Генерация ответа 🔄', disable_notification=True)
     print(f'{slash}Генерация ответа 🔄 для {message.from_user.username}{sla_d}')
 
-    content = await get_chat_history(message, active_chat_id)
+    content = await get_chat_history(message)
     d.token_used(message, content)
     await msg.delete()
     await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
 
-async def get_chat_history(message: types.Message, active_chat_id):
+async def get_chat_history(message: types.Message):
     global op
     try:
         content = await openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo",
-            messages=d.message_data(chat_id=active_chat_id, message=message) + [{'role': 'user', 'content': 'What we was talking about? Please answer me in the language we used to speak, your answer need to be short'}],
+            messages=d.message_data(message=message) + [{'role': 'user', 'content': 'What we was talking about? Please answer me in the language we used to speak, your answer need to be short'}],
             api_key=op[0])
         op = onetoto(op)
         return content
     except:
-        content = await get_chat_history(message, active_chat_id)
+        content = await get_chat_history(message)
         return content
 
 @dp.message_handler(content_types=['text'])
@@ -139,23 +139,23 @@ async def handle_message(message: types.Message):
     msg = await message.answer('Генерация ответа 🔄', disable_notification=True)
     print(f'{slash}Генерация ответа 🔄 для {message.from_user.username}{sla_d}')
 
-    content = await get_message(message, active_chat_id)
+    content = await get_message(message)
     d.add_message(active_chat_id, content)
     d.token_used(message, content)
     await msg.delete()
     await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
 
-async def get_message(message: types.Message, active_chat_id):
+async def get_message(message: types.Message):
     global op
     try:
         content = await openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo",
-            messages=d.message_data(chat_id=active_chat_id, message=message),
+            messages=d.message_data(message=message),
             api_key=op[0])
         op = onetoto(op)
         return content
     except:
-        content = await get_message(message, active_chat_id)
+        content = await get_message(message)
         return content
 
 

@@ -155,7 +155,7 @@ CREATE TABLE IF NOT EXISTS user (
         result = self.cursor.execute('SELECT id FROM message WHERE chat_id = ?', (chat_id,))
         return [row[0] for row in result]
 
-    def message_data(self, message: Message = None, chat_id=None):
+    def message_data(self, message: Message = None):
         result = [{'role': 'system', 'content': self.system_message(message)}]
         data = self.cursor.execute('SELECT text, role FROM (SELECT id, text, role FROM message WHERE chat_id = (SELECT id FROM chat WHERE user_id = ? and active = 1) ORDER BY id DESC LIMIT 4) ORDER BY id;', (message.from_user,))
         for row in data.fetchall():
