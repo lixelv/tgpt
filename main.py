@@ -120,7 +120,7 @@ async def handle_chat_history(message: types.Message):
 async def get_chat_history(message: types.Message):
     global op
     try:
-        content = await openai.ChatCompletion.acreate(model="gpt-3.5-turbo", messages=d.message_data(message=message) + [{'role': 'user', 'content': 'What we was talking about? Please answer me in the language we used to speak, your answer need to be short'}], api_key=op[0])
+        content = await openai.ChatCompletion.acreate(model="gpt-3.5-turbo", messages=d.message_data(message=message) + [{'role': 'user', 'content': 'What we was talking about? Please answer me on russian language, your answer need to be short'}], api_key=op[0])
         op = onetoto(op)
         return content
     except:
