@@ -1,6 +1,9 @@
 import sqlite3
+
 from aiogram.types import Message, CallbackQuery
+
 from url import *
+
 
 class DB:
 
@@ -8,45 +11,56 @@ class DB:
         self.connect = sqlite3.connect(database)
         self.cursor = self.connect.cursor()
         self.cursor.execute("""
-CREATE TABLE IF NOT EXISTS chat (
-    id      INTEGER  PRIMARY KEY AUTOINCREMENT
-                     UNIQUE
-                     NOT NULL,
-    user_id INTEGER  NOT NULL,
-    name    TEXT,
-    active  INTEGER  NOT NULL
-                     DEFAULT (1),
-    date    DATETIME NOT NULL
-                     DEFAULT (DATETIME('now') ) 
-);""")
+    CREATE TABLE IF NOT EXISTS chat (
+        id      INTEGER  PRIMARY KEY AUTOINCREMENT
+                         UNIQUE
+                         NOT NULL,
+        user_id INTEGER  NOT NULL,
+        name    TEXT,
+        active  INTEGER  NOT NULL
+                         DEFAULT (1),
+        bot_description TEXT     NOT NULL
+                         DEFAULT ('You are a helpful assistant.'),
+        hidden INTEGER NOT NULL DEFAULT (0),
+        date    DATETIME NOT NULL
+                         DEFAULT (DATETIME('now') ) 
+    );""")
         self.cursor.execute("""
-CREATE TABLE IF NOT EXISTS message (
-    id      INTEGER  PRIMARY KEY
-                     NOT NULL
-                     UNIQUE,
-    chat_id INTEGER  NOT NULL,
-    text    TEXT     NOT NULL,
-    role    TEXT     NOT NULL,
-    date    DATETIME DEFAULT (DATETIME('now') ) 
-                     NOT NULL
-);""")
+    CREATE TABLE IF NOT EXISTS message (
+        id      INTEGER  PRIMARY KEY
+                         NOT NULL
+                         UNIQUE,
+        chat_id INTEGER  NOT NULL,
+        text    TEXT     NOT NULL,
+        role    TEXT     NOT NULL,
+        hidden INTEGER NOT NULL DEFAULT (0),
+        date    DATETIME DEFAULT (DATETIME('now') ) 
+                         NOT NULL
+    );""")
         self.cursor.execute("""
-CREATE TABLE IF NOT EXISTS user (
-    id              INTEGER  UNIQUE
-                             NOT NULL
-                             PRIMARY KEY,
-    name            TEXT     DEFAULT ('Имя не задано'),
-    date            DATETIME DEFAULT ( (DATETIME('now') ) ) 
-                             NOT NULL,
-    bot_description TEXT     NOT NULL
-                             DEFAULT ('You are a helpful assistant.'),
-    token_used      INTEGER  DEFAULT (0) 
-                             NOT NULL,
-    block           INTEGER
-);""")
+    CREATE TABLE IF NOT EXISTS user (
+        id              INTEGER  UNIQUE
+                                 NOT NULL
+                                 PRIMARY KEY,
+        name            TEXT     DEFAULT ('Имя не задано'),
+        date            DATETIME DEFAULT ( (DATETIME('now') ) ) 
+                                 NOT NULL,
+        token_used      INTEGER  DEFAULT (0) 
+                                 NOT NULL,
+        block           INTEGER
+    );""")
         self.connect.commit()
 
     # region User 🧑🏻
+    def block_user(self, message: Message):
+        self.cursor.execute('UPDATE user SET block = 1 WHERE id = ?', (message.get_args(),))
+        pprint(f'{slash}Пользователь {message.from_user.username} заблокирован{sla_d}')
+        self.connect.commit()
+
+    def is_blocked(self, message: Message):
+        self.cursor.execute('SELECT block FROM user WHERE id = ?', (message.from_user.id,))
+        return bool(self.cursor.fetchone()[0])
+
     def user_exists(self, message: Message):
         result = self.cursor.execute('SELECT `id` FROM user WHERE id = ?', (message.from_user.id,))
         return bool(result.fetchall())
@@ -56,27 +70,17 @@ CREATE TABLE IF NOT EXISTS user (
         self.connect.commit()
         pprint(f'{slash}`\n`\n`\nПользователь {message.from_user.username} добавлен\n`\n`\n`{sla_d}')
 
+    # endregion
+    # region Chat 📝
     def system_message(self, message: Message):
-        self.cursor.execute('SELECT bot_description FROM user WHERE id = ?', (message.from_user.id,))
+        self.cursor.execute('SELECT description FROM chat WHERE user_id = ? and active = 1', (message.from_user.id,))
         return self.cursor.fetchone()[0]
 
     def system_message_update(self, message: Message):
         args = message.get_args() if message.get_args() != '' else 'You are a smart, helpful, kind, nice, good and very friendly assistant.'
-        self.cursor.execute('UPDATE user SET bot_description = ? WHERE id = ?', (args, message.from_user.id))
+        self.cursor.execute('UPDATE chat SET description = ? WHERE user_id = ? and active = 1', (args, message.from_user.id))
+        pprint(f'{slash}Пользователь {message.from_user.username} изменил описание активного чата на {args}{sla_d}')
         self.connect.commit()
-        pprint(f'{slash}Пользователь {message.from_user.username} изменил описание бота на {args}{sla_d}')
-        
-    def block_user(self, message: Message):
-        self.cursor.execute('UPDATE user SET block = 1 WHERE id = ?', (message.get_args(),))
-        self.connect.commit()
-        pprint(f'{slash}Пользователь {message.from_user.username} заблокирован{sla_d}')
-
-    def is_blocked(self, message: Message):
-        self.cursor.execute('SELECT block FROM user WHERE id = ?', (message.from_user.id,))
-        return bool(self.cursor.fetchone()[0])
-
-    # endregion
-    # region Chat 📝
 
     def edit_chat_name(self, message: Message, chat_id):
         self.cursor.execute('UPDATE chat SET name = ? WHERE id = ?', (message.get_args(), chat_id))
@@ -85,7 +89,7 @@ CREATE TABLE IF NOT EXISTS user (
 
     def add_chat(self, message: Message, start_chat=True):
         if self.chat_list_id(message):
-            self.cursor.execute('UPDATE chat SET active = 0 WHERE active = 1 and user_id = ?', (message.from_user.id,),)
+            self.cursor.execute('UPDATE chat SET active = 0 WHERE active = 1 and user_id = ?', (message.from_user.id,), )
         if start_chat:
             self.cursor.execute('INSERT INTO chat(user_id, name) VALUES(?,?)', (message.from_user.id, message.get_args()))
             pprint(f'{slash}Создан чат {message.get_args()}, {message.from_user.username}{sla_d}')
@@ -94,11 +98,11 @@ CREATE TABLE IF NOT EXISTS user (
         self.connect.commit()
 
     def chat_list_id(self, message: Message = None, id=None):
-        result = self.cursor.execute('SELECT id FROM chat WHERE user_id = ?', (message.from_user.id,) if id is None else (id,))
+        result = self.cursor.execute('SELECT id FROM chat WHERE user_id = ? and hidden = 0', (message.from_user.id,) if id is None else (id,))
         return [row[0] for row in result.fetchall()]
 
     def chat_list_name(self, message: Message):
-        result = self.cursor.execute('SELECT name FROM chat WHERE user_id = ?', (message.from_user.id,))
+        result = self.cursor.execute('SELECT name FROM chat WHERE user_id = ? and hidden = 0', (message.from_user.id,))
         return [row[0] for row in result.fetchall()]
 
     def start_chat(self, message: Message):
@@ -121,7 +125,7 @@ CREATE TABLE IF NOT EXISTS user (
         return result.fetchone()[0] if result is not None else None
 
     def set_chat_active_after_del(self, message: Message):
-        self.cursor.execute('SELECT MAX(id) FROM chat WHERE user_id = ?', (message.from_user.id,))
+        self.cursor.execute('SELECT MAX(id) FROM chat WHERE user_id = ? and hidden = 0', (message.from_user.id,))
         chat_id = self.cursor.fetchone()[0]
         self.cursor.execute('UPDATE chat SET active = 1 WHERE id = ?', (chat_id,))
         self.connect.commit()
@@ -133,17 +137,18 @@ CREATE TABLE IF NOT EXISTS user (
         pprint(f'{slash}Выбран чат: {self.chat_name_from_id(callback_query.data)}, {callback_query.from_user.username}{sla_d}')
 
     def del_chat(self, chat_id):
-        self.cursor.execute('DELETE FROM CHAT WHERE id = ?', (chat_id,))
+        self.cursor.execute('UPDATE chat SET hidden = 1 WHERE id = ?; UPDATE message SET hidden = 1 WHERE chat_id = ?', (chat_id, chat_id))
         self.connect.commit()
 
     def clear_chat(self, chat_id):
-        self.cursor.execute('DELETE FROM message WHERE chat_id = ?', (chat_id,))
+        self.cursor.execute('UPDATE message SET hidden = 1 WHERE chat_id = ?', (chat_id,))
         self.connect.commit()
+
     # endregion
     # region Message 📨
 
     def message_count(self, chat_id):
-        self.cursor.execute('SELECT * FROM message WHERE chat_id = ?', (chat_id,))
+        self.cursor.execute('SELECT * FROM message WHERE chat_id = ? and hidden = 0', (chat_id,))
         return len(self.cursor.fetchall())
 
     def add_message(self, chat_id, content=None, role='assistant', message: Message = None):
@@ -152,19 +157,19 @@ CREATE TABLE IF NOT EXISTS user (
         print(f"{slash}Сообщение, содержание:\n```\n{warp(str(content['choices'][0]['message']['content']))}\n``` {role}, used: {content['usage']['total_tokens']}{sla_d}" if message is None else f"{slash}Сообщение, содержание:\n```\n{warp(str(message.text))}\n``` user: {message.from_user.username}{sla_d}")
 
     def message_list(self, chat_id):
-        result = self.cursor.execute('SELECT id FROM message WHERE chat_id = ?', (chat_id,))
+        result = self.cursor.execute('SELECT id FROM message WHERE chat_id = ? and hidden = 0', (chat_id,))
         return [row[0] for row in result]
 
     def message_data(self, message: Message = None):
         result = [{'role': 'system', 'content': self.system_message(message)}]
-        data = self.cursor.execute('SELECT text, role FROM (SELECT id, text, role FROM message WHERE chat_id = (SELECT id FROM chat WHERE user_id = ? and active = 1) ORDER BY id DESC LIMIT 4) ORDER BY id;', (message.from_user.id,))
+        data = self.cursor.execute('SELECT text, role FROM (SELECT id, text, role FROM message WHERE chat_id = (SELECT id FROM chat WHERE user_id = ? and active = 1) and hidden = 0 ORDER BY id DESC LIMIT 4) ORDER BY id;', (message.from_user.id,))
         for row in data.fetchall():
             result.append({'role': row[1], 'content': row[0]})
             print(result)
         return result
 
     def del_message(self, id):
-        self.cursor.execute('DELETE FROM message WHERE id = ?', (id,))
+        self.cursor.execute('UPDATE message SET hidden = 1 WHERE id = ?', (id,))
         self.connect.commit()
         pprint(f'{slash}Сообщение с id: {id} было удалено{sla_d}')
 
@@ -180,6 +185,8 @@ CREATE TABLE IF NOT EXISTS user (
     def select(self, sql, tur, many=False):
         self.cursor.execute(sql, tur)
         return self.cursor.fetchone() if many else self.cursor.fetchone()[0]
+
+
 
     def close(self):
         self.connect.close()

@@ -8,6 +8,7 @@ import openai
 
 d = DB('gpt.sqlite3')
 
+
 # region Admin
 # @dp.message_handler(lambda message: message.from_user.id in ADMIN_ID, commands=['start'])
 # async def admin_start(message: types.Message):
@@ -18,17 +19,15 @@ d = DB('gpt.sqlite3')
 async def start_handler(message: types.Message):
     if message.get_command() == '/start':
         await message.answer_sticker(sticker_s['Hi'])
-    await bot.send_message(
-        message.from_user.id,
-        hello if message.get_command() == '/start' else help_,
-        parse_mode='HTML'
-    )
+    await bot.send_message(message.from_user.id, hello if message.get_command() == '/start' else help_, parse_mode='HTML')
     if not d.user_exists(message):
         d.add_user(message)
+
 
 @dp.message_handler(lambda message: d.is_blocked(message))
 async def love(message: types.Message):
     await message.answer('Вы заблокированы!')
+
 
 @dp.message_handler(commands=['b', 'block'])
 async def set_block(message: types.Message):
@@ -38,12 +37,13 @@ async def set_block(message: types.Message):
     else:
         await message.answer('Ты не админ!')
 
+
 @dp.message_handler(commands=['t', 'token', 'tok'])
 async def token(message: types.Message):
     await message.answer(f'Вы использовали {d.token(message)} токенов')
 
 
-@dp.message_handler(commands=['description', 'cd', 'chat_description', 'c_d', 'chatdescripion'])
+@dp.message_handler(commands=['description', 'cd', 'chat_description', 'c_d', 'chatdescripion', 'desc'])
 async def bot_description(message: types.Message):
     d.system_message_update(message)
     await message.answer(f'Описание бота было изменено на {message.get_args() if message.get_args() != "" else "You are a smart, helpful, kind, nice, good and very friendly assistant."}')
@@ -104,6 +104,7 @@ async def choose_chat(message: types.Message):
 async def chat_history(message: types.Message):
     asyncio.create_task(handle_chat_history(message))
 
+
 async def handle_chat_history(message: types.Message):
     global op
     active_chat_id = d.active_chat_id(message)
@@ -115,22 +116,22 @@ async def handle_chat_history(message: types.Message):
     await msg.delete()
     await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
 
+
 async def get_chat_history(message: types.Message):
     global op
     try:
-        content = await openai.ChatCompletion.acreate(
-            model="gpt-3.5-turbo",
-            messages=d.message_data(message=message) + [{'role': 'user', 'content': 'What we was talking about? Please answer me in the language we used to speak, your answer need to be short'}],
-            api_key=op[0])
+        content = await openai.ChatCompletion.acreate(model="gpt-3.5-turbo", messages=d.message_data(message=message) + [{'role': 'user', 'content': 'What we was talking about? Please answer me in the language we used to speak, your answer need to be short'}], api_key=op[0])
         op = onetoto(op)
         return content
     except:
         content = await get_chat_history(message)
         return content
 
+
 @dp.message_handler(content_types=['text'])
 async def message(message: types.Message):
     asyncio.create_task(handle_message(message))
+
 
 async def handle_message(message: types.Message):
     global op
@@ -145,13 +146,11 @@ async def handle_message(message: types.Message):
     await msg.delete()
     await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
 
+
 async def get_message(message: types.Message):
     global op
     try:
-        content = await openai.ChatCompletion.acreate(
-            model="gpt-3.5-turbo",
-            messages=d.message_data(message=message),
-            api_key=op[0])
+        content = await openai.ChatCompletion.acreate(model="gpt-3.5-turbo", messages=d.message_data(message=message), api_key=op[0])
         op = onetoto(op)
         return content
     except:
@@ -165,33 +164,21 @@ async def send_sticker(message: Message):
     await message.answer(message.sticker.file_id)
     print(message.content_type)
 
+
 @dp.message_handler(content_types=["location"])
 async def weather(message: Message):
     await message.answer(get_weather(message.location.latitude, message.location.longitude))
 
+
 # endregion
 # region Other
 
-@dp.message_handler(
-    content_types=[
-        'audio',
-        'contact',
-        'document',
-        'game',
-        'invoice',
-        'photo',
-        'poll',
-        'sticker',
-        'venue',
-        'video',
-        'video_note',
-        'voice'
-    ]
-)
+@dp.message_handler(content_types=['audio', 'contact', 'document', 'game', 'invoice', 'photo', 'poll', 'sticker', 'venue', 'video', 'video_note', 'voice'])
 async def else_(message: Message):
     await message.answer_sticker(sticker_s['Error'])
     await message.answer(choice(phrases))
     print(message.content_type)
+
 
 # endregion
 # region Callback
@@ -201,10 +188,10 @@ async def callback_handler(callback_query: types.CallbackQuery):
     d.change_active_chat(callback_query)
     await callback_query.message.edit_text(f'Выбран чат: {d.chat_name_from_id(callback_query.data)}')
 
+
 # endregion
 
 
 if __name__ == "__main__":
     #  webhook_pooling(dp, port, link, [my_id])
     executor.start_polling(dp, skip_updates=True)
-    
