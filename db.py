@@ -137,7 +137,8 @@ class DB:
         pprint(f'{slash}Выбран чат: {self.chat_name_from_id(callback_query.data)}, {callback_query.from_user.username}{sla_d}')
 
     def del_chat(self, chat_id):
-        self.cursor.execute('UPDATE chat SET hidden = 1 WHERE id = ?; UPDATE message SET hidden = 1 WHERE chat_id = ?', (chat_id, chat_id))
+        self.cursor.execute('UPDATE chat SET hidden = 1 WHERE id = ?', (chat_id,))
+        self.cursor.execute('UPDATE message SET hidden = 1 WHERE chat_id = ?', (chat_id,))
         self.connect.commit()
 
     def clear_chat(self, chat_id):
