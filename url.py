@@ -2,7 +2,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from envparse import env
 import openai
-import textwrap
+# import textwrap
 import sys
 
 hello = """
@@ -13,14 +13,34 @@ hello = """
         """
 
 help_ = """
-Создайте новый чат командой <strong>/new_chat (название чата)</strong>
-Переименуйте активный чат командой <strong>/rename (новое имя)</strong>
-Узнайте название активного чата командой <strong>/active</strong>
-Выберете чат с помощью команды <strong>/select</strong>
-Удалите активный чат с командой <strong>/delete</strong>
-Чтобы очистить чат введите команду <strong>/clear</strong>
-Узнайте количество потраченных токенов введя <strong>/token</strong>
-Чтобы изменить описание бота напишите <strong>/description (описание бота)</strong> 
+Создайте новый чат командой <strong>/new (название чата)
+Варианты: /n /nc /n_c /new /newchat /new_chat </strong>
+
+Переименуйте активный чат командой <strong>/rename (новое имя)
+Варианты: /r /rc /r_c /rename /renamechat /rename_chat </strong>
+
+Узнайте название активного чата командой <strong>/active
+Варианты: /a /ac /a_c /activechat /active_chat </strong> 
+
+Узнайте историю чата командой <strong>/history
+Варианты: /h /ch /c_h /history /chat_history </strong>
+
+Выберете чат с помощью команды <strong>/select
+Варианты: /s /sc /s_c /select /selectchat /select_chat </strong>
+
+Удалите активный чат с командой <strong>/delete
+Варианты: /d /dc /d_c /del /delete /delchat /del_chat /deletechat /delete_chat </strong>
+
+Чтобы очистить чат введите команду <strong>/clear
+Варианты: /c /cc /c_c /clear /clearchat /clear_chat </strong>
+
+Чтобы изменить описание бота напишите <strong>/description (описание бота)
+Варианты: /cd /c_d /desc /description /chatdescripion /chat_description </strong>
+
+Узнайте количество потраченных токенов введя <strong>/token
+Варианты: /t /tok /token </strong>
+
+
 
 Чтобы использовать ChatGPT 3.5 просто напишите текстовый
 запрос боту например '<strong>Расскажи интересный факт о космосе</strong>'
@@ -89,15 +109,15 @@ def onetoto(lis: list):
     return lis
 
 
-def pprint(str):
-    str_ = textwrap.wrap(str, width=len(slash))
-    for line in str_:
-        print(line)
-
-
-def warp(text):
-    wrapped_text = textwrap.wrap(text, width=len(slash) - 2)
-    result = ''
-    for i in wrapped_text:
-        result += i + '\n'
-    return result[:-2]
+# def pprint(str):
+#     str_ = textwrap.wrap(str, width=len(slash))
+#     for line in str_:
+#         print(line)
+#
+#
+# def warp(text):
+#     wrapped_text = textwrap.wrap(text, width=len(slash) - 2)
+#     result = ''
+#     for i in wrapped_text:
+#         result += i + '\n'
+#     return result[:-2]
