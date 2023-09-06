@@ -110,8 +110,9 @@ async def handle_chat_history(message: types.Message):
 async def get_chat_history(message: types.Message):
     global op
     try:
-        content = await openai.ChatCompletion.acreate(model="gpt-3.5-turbo", messages=d.message_data(message.from_user.id) + [{'role': 'user', 'content': 'What we was talking about? Please answer me on russian language, your answer need to be short'}], api_key=op[0])
-        op = onetoto(op)
+        content = await openai.ChatCompletion.acreate(model="gpt-3.5-turbo",
+                                                      messages=d.message_data(message.from_user.id) + histor,
+                                                      api_key=choice(op))
         return content
 
     except:
@@ -139,8 +140,9 @@ async def handle_message(message: types.Message):
 async def get_message(message: types.Message):
     global op
     try:
-        content = await openai.ChatCompletion.acreate(model="gpt-3.5-turbo", messages=d.message_data(message.from_user.id), api_key=op[0])
-        op = onetoto(op)
+        content = await openai.ChatCompletion.acreate(model="gpt-3.5-turbo",
+                                                      messages=d.message_data(message.from_user.id),
+                                                      api_key=choice(op))
         return content
 
     except:

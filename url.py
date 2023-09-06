@@ -46,6 +46,8 @@ help_ = """
 запрос боту например '<strong>Расскажи интересный факт о космосе</strong>'
         """
 
+histor = [{'role': 'user', 'content': 'What we was talking about? Please answer me on russian language, your answer need to be short'}]
+
 sticker_s = {
     'Hi': 'CAACAgIAAxkBAAIGsmRk5s_MYBOcUS6ItUTHXF417syzAAJxKwACQo3ASjypfvfFuI3SLwQ',
     'Loading': 'CAACAgIAAxkBAAIGuGRk5tAuE9s_TyADgQvd2rJioqIVAAItMAAC-cm5SlL0u9sCgWBtLwQ',

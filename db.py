@@ -148,7 +148,7 @@ class DB:
 
     def message_data(self, user_id: int) -> list:
         result = [{'role': 'system', 'content': self.system_message(user_id)}]
-        data = self.read('SELECT text, role FROM (SELECT id, text, role FROM message WHERE chat_id = (SELECT id FROM chat WHERE user_id = ? and active = 1) and hidden = 0 ORDER BY id DESC LIMIT 4) ORDER BY id;', (message.from_user.id,))
+        data = self.read('SELECT text, role FROM (SELECT id, text, role FROM message WHERE chat_id = (SELECT id FROM chat WHERE user_id = ? and active = 1) and hidden = 0 ORDER BY id DESC LIMIT 4) ORDER BY id;', (user_id,))
         for row in data:
             result.append({'role': row[1], 'content': row[0]})
         return result
