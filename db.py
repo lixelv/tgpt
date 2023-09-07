@@ -7,7 +7,7 @@ from url import *
 
 class DB:
 
-    # region Main ðŸ‘¾
+    # region Main
     def __init__(self, database):
         self.connect = sqlite3.connect(database)
         self.cursor = self.connect.cursor()
@@ -16,7 +16,7 @@ class DB:
       id         INTEGER  UNIQUE
                           NOT NULL
                           PRIMARY KEY,
-      name       TEXT     DEFAULT ('Èìÿ íå çàäàíî'),
+      name       TEXT     DEFAULT ('You are a helpfull assistant'),
       date       DATETIME DEFAULT ( (DATETIME('now') ) ) 
                           NOT NULL,
       token_used INTEGER  DEFAULT (0) 
@@ -66,7 +66,7 @@ class DB:
         else:
             return self.cursor.fetchall()
     # endregion
-    # region User ðŸ§‘ðŸ»
+    # region User
     def block_user(self, user_id: int):
         self.do('UPDATE user SET block = 1 WHERE id = ?', (user_id,))
 
@@ -80,7 +80,7 @@ class DB:
         self.do('INSERT INTO user(id, name) VALUES(?,?)', (user_id, user_name))
 
     # endregion
-    # region Chat ðŸ“
+    # region Chat
     def system_message(self, user_id: int) -> str:
         return self.read('SELECT description FROM chat WHERE active = 1 and user_id = ?', (user_id,), one = True)[0]
 
@@ -137,7 +137,7 @@ class DB:
         self.do('UPDATE message SET hidden = 1 WHERE chat_id = (SELECT id FROM chat WHERE user_id = ? and active = 1)', (user_id,))
 
     # endregion
-    # region Message ðŸ“¨
+    # region Message
 
     def message_count(self, chat_id: int) -> int:
         return len(self.read('SELECT * FROM message WHERE chat_id = ? and hidden = 0', (chat_id,)))
