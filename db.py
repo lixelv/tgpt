@@ -11,46 +11,49 @@ class DB:
     def __init__(self, database):
         self.connect = sqlite3.connect(database)
         self.cursor = self.connect.cursor()
-        self.cursor.execute("""
-    CREATE TABLE IF NOT EXISTS chat (
-        id      INTEGER  PRIMARY KEY AUTOINCREMENT
-                         UNIQUE
-                         NOT NULL,
-        user_id INTEGER  NOT NULL,
-        name    TEXT,
-        active  INTEGER  NOT NULL
-                         DEFAULT (1),
-        bot_description TEXT     NOT NULL
-                         DEFAULT ('You are a helpful assistant.'),
-        hidden INTEGER NOT NULL DEFAULT (0),
-        date    DATETIME NOT NULL
-                         DEFAULT (DATETIME('now') ) 
-    );""")
-        self.cursor.execute("""
-    CREATE TABLE IF NOT EXISTS message (
-        id      INTEGER  PRIMARY KEY
-                         NOT NULL
-                         UNIQUE,
-        chat_id INTEGER  NOT NULL,
-        text    TEXT     NOT NULL,
-        role    TEXT     NOT NULL,
-        hidden INTEGER NOT NULL DEFAULT (0),
-        date    DATETIME DEFAULT (DATETIME('now') ) 
-                         NOT NULL
-    );""")
-        self.cursor.execute("""
+        self.do("""
     CREATE TABLE IF NOT EXISTS user (
-        id              INTEGER  UNIQUE
-                                 NOT NULL
-                                 PRIMARY KEY,
-        name            TEXT     DEFAULT ('Ð˜Ð¼Ñ Ð½Ðµ Ð·Ð°Ð´Ð°Ð½Ð¾'),
-        date            DATETIME DEFAULT ( (DATETIME('now') ) ) 
-                                 NOT NULL,
-        token_used      INTEGER  DEFAULT (0) 
-                                 NOT NULL,
-        block           INTEGER
+      id         INTEGER  UNIQUE
+                          NOT NULL
+                          PRIMARY KEY,
+      name       TEXT     DEFAULT ('Èìÿ íå çàäàíî'),
+      date       DATETIME DEFAULT ( (DATETIME('now') ) ) 
+                          NOT NULL,
+      token_used INTEGER  DEFAULT (0) 
+                          NOT NULL,
+      block      INTEGER
     );""")
-        self.connect.commit()
+        self.do("""
+    CREATE TABLE IF NOT EXISTS chat (
+      id          INTEGER  PRIMARY KEY AUTOINCREMENT
+                           UNIQUE
+                           NOT NULL,
+      user_id     INTEGER  NOT NULL
+                           REFERENCES user (id),
+      name        TEXT,
+      active      INTEGER  NOT NULL
+                           DEFAULT (1),
+      description TEXT     NOT NULL
+                           DEFAULT [You are a helpful assistant.],
+      hidden      INTEGER  DEFAULT (0) 
+                           NOT NULL,
+      date        DATETIME NOT NULL
+                           DEFAULT (DATETIME('now') ) 
+    );""")
+        self.do("""
+    CREATE TABLE IF NOT EXISTS message (
+      id      INTEGER  PRIMARY KEY
+                       NOT NULL
+                       UNIQUE,
+      chat_id INTEGER  NOT NULL
+                       REFERENCES chat (id),
+      text    TEXT     NOT NULL,
+      role    TEXT     NOT NULL,
+      hidden  INTEGER  DEFAULT (0) 
+                       NOT NULL,
+      date    DATETIME DEFAULT (DATETIME('now') ) 
+                     NOT NULL
+    );""")
 
     def do(self, sql, values=()) -> None:
         self.cursor.execute(sql, values)
