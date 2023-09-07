@@ -152,14 +152,14 @@ async def get_message(message: types.Message):
 
 
 @dp.message_handler(content_types=["sticker"])
-async def send_sticker(message: Message):
+async def send_sticker(message: types.Message):
     await message.answer_sticker(message.sticker.file_id)
     await message.answer(message.sticker.file_id)
     print(message.content_type)
 
 
 @dp.message_handler(content_types=["location"])
-async def weather(message: Message):
+async def weather(message: types.Message):
     await message.answer(get_weather(message.location.latitude, message.location.longitude))
 
 
@@ -167,7 +167,7 @@ async def weather(message: Message):
 # region Other
 
 @dp.message_handler(content_types=['audio', 'contact', 'document', 'game', 'invoice', 'photo', 'poll', 'sticker', 'venue', 'video', 'video_note', 'voice'])
-async def else_(message: Message):
+async def else_(message: types.Message):
     await message.answer_sticker(sticker_s['Error'])
     await message.answer(choice(phrases))
     print(message.content_type)
