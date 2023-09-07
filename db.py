@@ -1,6 +1,5 @@
 import sqlite3
 
-from aiogram.types import Message, CallbackQuery
 
 from url import *
 
@@ -88,7 +87,6 @@ class DB:
         self.do('UPDATE chat SET description = ? WHERE active = 1 and user_id = ?', (args, user_id))
 
     def edit_chat_name(self, args: str, user_id: int):
-        chat_id = self.active_chat_id(user_id)
         self.do('UPDATE chat SET name = ? WHERE user_id = ? and active = 1', (args, user_id))
 
     def add_chat(self, user_id: int, args="start_chat"):

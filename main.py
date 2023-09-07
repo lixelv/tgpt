@@ -53,9 +53,8 @@ async def rename_chat(message: types.Message):
 
 @dp.message_handler(commands=['a', 'active', 'ac', 'activechat', 'a_c', 'active_chat'])
 async def active_chat(message: types.Message):
-    d.active_chat_name(message.from_user.id)
-    d.system_message(message.from_user.id)
-    await message.answer(f'Активный чат: <strong>{d.chat_name_from_id(d.active_chat_id(message.from_user.id))}</strong>, \nОписание чата: <strong>{d.system_message(message.from_user.id)}</strong>', parse_mode='HTML')
+    await message.answer(f'Активный чат: <strong>{d.active_chat_name(message.from_user.id)}</strong>, \n' \
+        f'Описание чата: <strong>{d.system_message(message.from_user.id)}</strong>', parse_mode='HTML')
 
 
 @dp.message_handler(commands=['chat_history', 'history', 'c_h', 'ch', 'h'])
@@ -180,7 +179,8 @@ async def else_(message: Message):
 @dp.callback_query_handler(lambda callback_query: int(callback_query.data) in d.chat_list_id(callback_query.from_user.id))
 async def callback_handler(callback_query: types.CallbackQuery):
     d.change_active_chat(callback_query.from_user.id, callback_query.data)
-    await callback_query.message.edit_text(f'Выбран чат: <strong>{d.chat_name_from_id(callback_query.data)}</strong>, \nОписание чата: <strong>{d.system_message(callback_query.from_user.id)}</strong>',
+    await callback_query.message.edit_text(f'Выбран чат: <strong>{d.chat_name_from_id(callback_query.data)}</strong>, \n' \
+        f'Описание чата: <strong>{d.system_message(callback_query.from_user.id)}</strong>',
                                            parse_mode='HTML')
 
 
