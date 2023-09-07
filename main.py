@@ -1,6 +1,6 @@
 from db import *
 from parse_weather import get_weather
-from aiogram import types, executor
+from aiogram import types
 from webhook import webhook_pooling
 from random import choice
 import asyncio
@@ -53,8 +53,8 @@ async def rename_chat(message: types.Message):
 
 @dp.message_handler(commands=['a', 'active', 'ac', 'activechat', 'a_c', 'active_chat'])
 async def active_chat(message: types.Message):
-    active_chat_name = d.active_chat_name(message.from_user.id)
-    active_chat_description = d.system_message(message.from_user.id)
+    d.active_chat_name(message.from_user.id)
+    d.system_message(message.from_user.id)
     await message.answer(f'Активный чат: <strong>{d.chat_name_from_id(d.active_chat_id(message.from_user.id))}</strong>, \nОписание чата: <strong>{d.system_message(message.from_user.id)}</strong>', parse_mode='HTML')
 
 
