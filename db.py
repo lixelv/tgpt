@@ -102,7 +102,12 @@ class DB:
 
     def message_data(self, user_id: int) -> list:
         result = [{'role': 'system', 'content': self.system_message(user_id)}]
-        data = self.read('SELECT text, role FROM (SELECT id, text, role FROM message WHERE chat_id = (SELECT id FROM chat WHERE user_id = %s and active = 1) ORDER BY id DESC LIMIT 4) AS alias_table ORDER BY id;', (user_id,))
+
+        limit = self.read('SELECT `limit` FROM user WHERE id = %s', (user_id,), one = True)[0]
+
+        data = self.read("""SELECT text, role FROM message WHERE chat_id = (SELECT id FROM chat WHERE user_id = %s and active = 1) 
+                         ORDER BY id DESC LIMIT %s;""", (user_id, limit))
+
         for row in data:
             result.append({'role': row[1], 'content': row[0]})
         return result
@@ -119,6 +124,5 @@ class DB:
     # endregion
 
     def __del__(self):
-        if hasattr(self, 'connect') and self.connect.is_connected():
-            self.cursor.close()
-            self.connect.close()
+        self.cursor.close()
+        self.connect.close()
