@@ -73,6 +73,12 @@ sla_d = ''
 
 
 env.read_envfile('.env')
+db_config = {
+    "host": env('HOST'),
+    "user": env('USER'),
+    "password": env('PASSWORD'),
+    "database": env('DB')
+}
 op = env('OPENAI').split(',')
 token = env('TELEGRAM')
 my_id = env('MYID')

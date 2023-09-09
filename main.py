@@ -1,12 +1,13 @@
-from db import *
+from db import DB
+from url import *
 from parse_weather import get_weather
-from aiogram import types
-from webhook import webhook_pooling
+from aiogram import types, executor
+#  from webhook import webhook_pooling
 from random import choice
 import asyncio
 import openai
 
-d = DB('gpt.sqlite3')
+d = DB(db_config)
 
 
 # region Admin
@@ -53,7 +54,7 @@ async def rename_chat(message: types.Message):
 
 @dp.message_handler(commands=['a', 'active', 'ac', 'activechat', 'a_c', 'active_chat'])
 async def active_chat(message: types.Message):
-    await message.answer(f'Активный чат: <strong>{d.active_chat_name(message.from_user.id)}</strong>, \n' \
+    await message.answer(f'Активный чат: <strong>{d.active_chat_name(message.from_user.id)}</strong>, \n'
         f'Описание чата: <strong>{d.system_message(message.from_user.id)}</strong>', parse_mode='HTML')
 
 
@@ -112,8 +113,8 @@ async def get_chat_history(message: types.Message):
     global op
     try:
         content = await openai.ChatCompletion.acreate(model="gpt-3.5-turbo",
-                                                      messages=d.message_data(message.from_user.id) + histor,
-                                                      api_key=choice(op))
+                                                          messages=d.message_data(message.from_user.id) + histor,
+                                                          api_key=choice(op))
         return content
 
     except:
@@ -179,7 +180,7 @@ async def else_(message: types.Message):
 @dp.callback_query_handler(lambda callback_query: int(callback_query.data) in d.chat_list_id(callback_query.from_user.id))
 async def callback_handler(callback_query: types.CallbackQuery):
     d.change_active_chat(callback_query.from_user.id, callback_query.data)
-    await callback_query.message.edit_text(f'Выбран чат: <strong>{d.chat_name_from_id(callback_query.data)}</strong>, \n' \
+    await callback_query.message.edit_text(f'Выбран чат: <strong>{d.chat_name_from_id(callback_query.data)}</strong>, \n'
         f'Описание чата: <strong>{d.system_message(callback_query.from_user.id)}</strong>',
                                            parse_mode='HTML')
 
@@ -188,5 +189,5 @@ async def callback_handler(callback_query: types.CallbackQuery):
 
 
 if __name__ == "__main__":
-    webhook_pooling(dp, port, link, [my_id])
-    #  executor.start_polling(dp, skip_updates=True)
+    #  webhook_pooling(dp, port, link, [my_id])
+    executor.start_polling(dp, skip_updates=True)
