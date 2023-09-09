@@ -122,4 +122,3 @@ class DB:
         if hasattr(self, 'connect') and self.connect.is_connected():
             self.cursor.close()
             self.connect.close()
-            
