@@ -74,10 +74,10 @@ sla_d = ''
 
 env.read_envfile('.env')
 db_config = {
-    "host": env('HOST'),
-    "user": env('USER'),
-    "password": env('PASSWORD'),
-    "database": env('DB')
+    "host": env('HOST_'),
+    "user": env('USER_'),
+    "password": env('PASSWORD_'),
+    "database": env('DB_')
 }
 op = env('OPENAI').split(',')
 token = env('TELEGRAM')
@@ -88,18 +88,6 @@ weather = env('WEATHER')
 bot = Bot(token)
 Bot.set_current(bot)
 dp = Dispatcher(bot)
-
-with open('output.txt', 'w') as f:
-    sys.stdout = f
-sys.stdout = sys.__stdout__
-
-def create_chat_completion(api_key, messages):
-    return openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=messages,
-        api_key=api_key
-    )
-
 
 def inline(list_keys: list, list_data: list,
            width: int = 2):
