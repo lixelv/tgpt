@@ -81,11 +81,11 @@ class DB:
 
     def del_chat(self, user_id: int):
         self.clear_chat(user_id)
-        self.do('DELETE FROM chat WHERE id = (SELECT id FROM chat WHERE user_id = %s and active = 1); ', (user_id,))
+        self.do('UPDATE chat SET hidden = 1 WHERE id = (SELECT id FROM chat WHERE user_id = %s and active = 1); ', (user_id,))
         self.set_chat_active_after_del(user_id)
 
     def clear_chat(self, user_id: int):
-        self.do('DELETE FROM message WHERE chat_id = (SELECT id FROM chat WHERE user_id = %s and active = 1)', (user_id,))
+        self.do('UPDATE message SET hidden = 1 WHERE chat_id = (SELECT id FROM chat WHERE user_id = %s and active = 1)', (user_id,))
 
     # endregion
     # region Message
@@ -105,11 +105,12 @@ class DB:
 
         limit = self.read('SELECT `limit` FROM user WHERE id = %s', (user_id,), one = True)[0]
 
-        data = self.read("""SELECT text, role FROM message WHERE chat_id = (SELECT id FROM chat WHERE user_id = %s and active = 1) 
-                         ORDER BY id DESC LIMIT %s;""", (user_id, limit))
+        data = self.read("""SELECT text, role FROM (SELECT id, text, role FROM message WHERE chat_id = (SELECT id FROM chat WHERE user_id = %s and active = 1) and hidden = 0
+                         ORDER BY id DESC LIMIT %s) AS alias_table ORDER BY id;""", (user_id, limit))
 
         for row in data:
             result.append({'role': row[1], 'content': row[0]})
+        print(result)
         return result
 
     def del_message(self, message_id):

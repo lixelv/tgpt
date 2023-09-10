@@ -103,23 +103,10 @@ async def token(message: types.Message):
 async def handle_chat_history(message: types.Message):
     msg = await message.answer('Генерация ответа 🔄', disable_notification=True)
 
-    content = await get_chat_history(message)
+    content = await get_message(message.from_user.id, d.message_data(message.from_user.id)+histor)
     d.token_used(message.from_user.id, content['usage']['total_tokens'])
     await msg.delete()
     await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
-
-
-async def get_chat_history(message: types.Message):
-    global op
-    try:
-        content = await openai.ChatCompletion.acreate(model="gpt-3.5-turbo",
-                                                          messages=d.message_data(message.from_user.id) + histor,
-                                                          api_key=choice(op))
-        return content
-
-    except:
-        content = await get_chat_history(message)
-        return content
 
 
 @dp.message_handler(content_types=['text'])
@@ -132,23 +119,23 @@ async def handle_message(message: types.Message):
     d.add_message(active_chat_id, message.text, role='user')
     msg = await message.answer('Генерация ответа 🔄', disable_notification=True)
 
-    content = await get_message(message)
+    content = await get_message(message.from_user.id, d.message_data(message.from_user.id))
     d.add_message(active_chat_id, content['choices'][0]['message']['content'])
     d.token_used(message.from_user.id, content['usage']['total_tokens'])
     await msg.delete()
     await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
 
 
-async def get_message(message: types.Message):
+async def get_message(user_id, msgs):
     global op
     try:
         content = await openai.ChatCompletion.acreate(model="gpt-3.5-turbo",
-                                                          messages=d.message_data(message.from_user.id),
+                                                          messages=msgs,
                                                           api_key=choice(op))
         return content
 
     except:
-        content = await get_message(message)
+        content = await get_message(user_id, msgs)
         return content
 
 
