@@ -93,8 +93,8 @@ class DB:
     def message_count(self, chat_id: int) -> int:
         return len(self.read('SELECT * FROM message WHERE chat_id = %s', (chat_id,)))
 
-    def add_message(self, chat_id: int, content: str, role='assistant'):
-        self.do('INSERT INTO message(chat_id, text, role) VALUES(%s,%s,%s)', (chat_id, content, role))
+    def add_message(self, user_id: int, content: str, role='assistant'):
+        self.do('INSERT INTO message(chat_id, text, role) VALUES((SELECT id FROM chat WHERE user_id = %s AND active = 1),%s,%s)', (user_id, content, role))
 
 
     def message_list(self, chat_id: int) -> list:
@@ -110,7 +110,6 @@ class DB:
 
         for row in data:
             result.append({'role': row[1], 'content': row[0]})
-        print(result)
         return result
 
     def del_message(self, message_id):

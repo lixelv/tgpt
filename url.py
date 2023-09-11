@@ -1,9 +1,8 @@
 from aiogram import Bot, Dispatcher
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+import random
 from envparse import env
-import openai
 # import textwrap
-import sys
 
 hello = """
 Привет я <strong>ChatGPT_3.5</strong> был разработан @simeonlimon
@@ -80,6 +79,8 @@ db_config = {
     "database": env('DB_')
 }
 op = env('OPENAI').split(',')
+n = random.randint(0, len(op))
+op = [n, tuple(op)]
 token = env('TELEGRAM')
 my_id = env('MYID')
 port = env('PORT')
@@ -89,6 +90,7 @@ bot = Bot(token)
 Bot.set_current(bot)
 dp = Dispatcher(bot)
 
+
 def inline(list_keys: list, list_data: list,
            width: int = 2):
     kb: InlineKeyboardMarkup = InlineKeyboardMarkup(row_width=width)
@@ -97,12 +99,6 @@ def inline(list_keys: list, list_data: list,
         buttons.append(InlineKeyboardButton(key, callback_data=data))
     kb.add(*buttons)
     return kb
-
-
-def onetoto(lis: list):
-    lis.append(lis[0])
-    lis.remove(lis[0])
-    return lis
 
 
 # def pprint(str):

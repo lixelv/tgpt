@@ -18,6 +18,8 @@ async def set_block(message: types.Message):
         await message.answer(f'Пользователь с id {message.get_args()} заблокирован')
     else:
         await message.answer('Ты не админ!')
+
+
 # endregion
 # region User
 
@@ -25,13 +27,15 @@ async def set_block(message: types.Message):
 async def start_handler(message: types.Message):
     if message.get_command() == '/start':
         await message.answer_sticker(sticker_s['Hi'])
+        if not d.user_exists(message.from_user.id):
+            d.add_user(message.from_user.id, message.from_user.username)
     await bot.send_message(message.from_user.id, hello if message.get_command() == '/start' else help_, parse_mode='HTML')
-    if not d.user_exists(message.from_user.id):
-        d.add_user(message.from_user.id, message.from_user.username)
+
 
 @dp.message_handler(lambda message: not d.user_exists(message.from_user.id))
 async def user_exists(message: types.Message):
     await message.answer('Напишите команду /start')
+
 
 @dp.message_handler(lambda message: d.is_blocked(message.from_user.id))
 async def love(message: types.Message):
@@ -55,7 +59,7 @@ async def rename_chat(message: types.Message):
 @dp.message_handler(commands=['a', 'active', 'ac', 'activechat', 'a_c', 'active_chat'])
 async def active_chat(message: types.Message):
     await message.answer(f'Активный чат: <strong>{d.active_chat_name(message.from_user.id)}</strong>, \n'
-        f'Описание чата: <strong>{d.system_message(message.from_user.id)}</strong>', parse_mode='HTML')
+                         f'Описание чата: <strong>{d.system_message(message.from_user.id)}</strong>', parse_mode='HTML')
 
 
 @dp.message_handler(commands=['chat_history', 'history', 'c_h', 'ch', 'h'])
@@ -97,16 +101,16 @@ async def bot_description(message: types.Message):
 @dp.message_handler(commands=['t', 'token', 'tok'])
 async def token(message: types.Message):
     tokens = d.token(message.from_user.id)
-    await message.answer(f'Вы использовали {tokens} токенов, что эквивалентно {tokens*0.000002}$')
+    await message.answer(f'Вы использовали {tokens} токенов, что эквивалентно {tokens * 0.000002}$')
 
 
 async def handle_chat_history(message: types.Message):
     msg = await message.answer('Генерация ответа 🔄', disable_notification=True)
-
-    content = await get_message(message.from_user.id, d.message_data(message.from_user.id)+histor)
+    msgs = d.message_data(message.from_user.id) + histor
+    content = await get_message(msgs)
     d.token_used(message.from_user.id, content['usage']['total_tokens'])
     await msg.delete()
-    await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
+    await message.reply(content['choices'][0]['message']['content'])
 
 
 @dp.message_handler(content_types=['text'])
@@ -115,27 +119,28 @@ async def message(message: types.Message):
 
 
 async def handle_message(message: types.Message):
-    active_chat_id = d.active_chat_id(message.from_user.id)
-    d.add_message(active_chat_id, message.text, role='user')
+    d.add_message(message.from_user.id, message.text, role='user')
     msg = await message.answer('Генерация ответа 🔄', disable_notification=True)
-
-    content = await get_message(message.from_user.id, d.message_data(message.from_user.id))
-    d.add_message(active_chat_id, content['choices'][0]['message']['content'])
+    msgs = d.message_data(message.from_user.id)
+    content = await get_message(msgs)
+    d.add_message(message.from_user.id, content['choices'][0]['message']['content'])
     d.token_used(message.from_user.id, content['usage']['total_tokens'])
     await msg.delete()
-    await message.reply(content['choices'][0]['message']['content'], parse_mode='Markdown')
+    await message.reply(content['choices'][0]['message']['content'])
 
 
-async def get_message(user_id, msgs):
+async def get_message(msgs):
     global op
     try:
+        api_key = op[1][op[0] % len(op[1])]
+        op[0] += 1
         content = await openai.ChatCompletion.acreate(model="gpt-3.5-turbo",
-                                                          messages=msgs,
-                                                          api_key=choice(op))
+                                                      messages=msgs,
+                                                      api_key=api_key)
         return content
 
     except:
-        content = await get_message(user_id, msgs)
+        content = await get_message(msgs)
         return content
 
 
@@ -168,7 +173,7 @@ async def else_(message: types.Message):
 async def callback_handler(callback_query: types.CallbackQuery):
     d.change_active_chat(callback_query.from_user.id, callback_query.data)
     await callback_query.message.edit_text(f'Выбран чат: <strong>{d.chat_name_from_id(callback_query.data)}</strong>, \n'
-        f'Описание чата: <strong>{d.system_message(callback_query.from_user.id)}</strong>',
+                                           f'Описание чата: <strong>{d.system_message(callback_query.from_user.id)}</strong>',
                                            parse_mode='HTML')
 
 
