@@ -7,7 +7,7 @@ def webhook_pooling(
         port: int | str = None,
         link: str = None,
         admin_list: list | int | str = None,
-        loop: ProactorEventLoop = None,
+        loop=None,
         startup_message: str = 'Бот был запущен! ☠️ ❱ 👾 ❱ 🤖',
         shutdown_message: str = 'Бот был выключен. 🤖 ❱ 👾 ❱ ☠️'
 ):
