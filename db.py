@@ -1,10 +1,22 @@
 import aiomysql
+import asyncio
 
+
+async def keep_alive(pool):
+    while True:
+        async with pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("SELECT 1;")
+        await asyncio.sleep(3600)  # ждать 1000 секунд
 
 class DB:
-    def __init__(self, loop, host='localhost', port=3306, user='user', password='password', db='dbname'):
-        self.loop = loop
+    def __init__(self, loop=None, host='localhost', port=3306, user='user', password='password', db='dbname'):
+        if not loop:
+            self.loop = asyncio.get_event_loop()
+        else:
+            self.loop = loop
         self.pool = loop.run_until_complete(self.init_pool(host, port, user, password, db))
+        await keep_alive(self.pool)
 
     async def init_pool(self, host, port, user, password, db):
         pool = await aiomysql.create_pool(
