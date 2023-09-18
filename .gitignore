@@ -160,4 +160,4 @@ cython_debug/
 .idea/
 
 # Scripts
-readme.py
+readme.py!/tgpt/

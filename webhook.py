@@ -1,17 +1,26 @@
 from aiogram import Dispatcher, types
 from aiohttp import web
+from asyncio import ProactorEventLoop, get_event_loop
 
 def webhook_pooling(
         dp: Dispatcher = None,
         port: int | str = None,
         link: str = None,
         admin_list: list | int | str = None,
+        loop: ProactorEventLoop = None,
         startup_message: str = 'Бот был запущен! ☠️ ❱ 👾 ❱ 🤖',
         shutdown_message: str = 'Бот был выключен. 🤖 ❱ 👾 ❱ ☠️'
 ):
+
+    if not port:
+        port = 8080
+
+    if not loop:
+        loop = get_event_loop()
+
+
     # Create a bot instance with the provided token
-    bot = dp.bot
-    token = bot._token
+    token = dp.bot._token
 
     # Create an aiohttp web application
     app = web.Application()
@@ -31,7 +40,8 @@ def webhook_pooling(
     web.run_app(
         app,
         host='0.0.0.0',
-        port=port
+        port=port,
+        loop=loop
     )
 
 

@@ -1,7 +1,8 @@
 from aiogram import Bot, Dispatcher
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-import random
 from envparse import env
+from asyncio import get_event_loop
+import random
 # import textwrap
 
 hello = """
@@ -70,6 +71,7 @@ slash = '░░░░▒▒▒▒▒▒▓▓▓▓▓▓▓▓█████�
 
 sla_d = ''
 
+loop = get_event_loop()
 
 env.read_envfile('.env')
 db_config = {

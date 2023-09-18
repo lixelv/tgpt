@@ -7,14 +7,13 @@ from random import choice
 import asyncio
 import openai
 
-d = DB(db_config)
-
+d = DB(loop, host=db_config['host'], user=db_config['user'], password=db_config['password'], db=db_config['database'])
 
 # region Admin
 @dp.message_handler(commands=['b', 'block'])
 async def set_block(message: types.Message):
     if message.from_user.id == int(my_id):
-        d.block_user(message.from_user.id)
+        await d.block_user(message.from_user.id)
         await message.answer(f'Пользователь с id {message.get_args()} заблокирован')
     else:
         await message.answer('Ты не админ!')
@@ -27,17 +26,23 @@ async def set_block(message: types.Message):
 async def start_handler(message: types.Message):
     if message.get_command() == '/start':
         await message.answer_sticker(sticker_s['Hi'])
-        if not d.user_exists(message.from_user.id):
-            d.add_user(message.from_user.id, message.from_user.username)
-    await bot.send_message(message.from_user.id, hello if message.get_command() == '/start' else help_, parse_mode='HTML')
+        if not await d.user_exists(message.from_user.id):
+            await d.add_user(message.from_user.id, message.from_user.username)
+    await message.answer(hello if message.get_command() == '/start' else help_, parse_mode='HTML')
 
 
-@dp.message_handler(lambda message: not d.user_exists(message.from_user.id))
+async def is_user_exists(message: types.Message, *args, **kwargs):
+    return not await d.user_exists(message.from_user.id)
+
+@dp.message_handler(is_user_exists)
 async def user_exists(message: types.Message):
     await message.answer('Напишите команду /start')
 
+async def is_user_blocked(message: types.Message, *args, **kwargs):
+    return await d.is_blocked(message.from_user.id)
 
-@dp.message_handler(lambda message: d.is_blocked(message.from_user.id))
+
+@dp.message_handler(is_user_blocked)
 async def love(message: types.Message):
     await message.answer('Вы заблокированы!')
 
@@ -45,21 +50,21 @@ async def love(message: types.Message):
 @dp.message_handler(commands=['new_chat', 'n_c', 'nc', 'newchat', 'new', 'n'])
 async def new_chat(message: types.Message):
     args = message.get_args()
-    d.add_chat(message.from_user.id, args=args)
+    await d.add_chat(message.from_user.id, args=args)
     await message.answer(f'Создан новый чат {args}')
 
 
 @dp.message_handler(commands=['r', 'rc', 'r_c', 'rename_chat', 'renamechat', 'rename'])
 async def rename_chat(message: types.Message):
     args = message.get_args()
-    d.edit_chat_name(args, message.from_user.id)
+    await d.edit_chat_name(args, message.from_user.id)
     await message.answer(f'Имя активного чата изменено на: {args}')
 
 
 @dp.message_handler(commands=['a', 'active', 'ac', 'activechat', 'a_c', 'active_chat'])
 async def active_chat(message: types.Message):
-    await message.answer(f'Активный чат: <strong>{d.active_chat_name(message.from_user.id)}</strong>, \n'
-                         f'Описание чата: <strong>{d.system_message(message.from_user.id)}</strong>', parse_mode='HTML')
+    await message.answer(f'Активный чат: <strong>{await d.active_chat_name(message.from_user.id)}</strong>, \n'
+                         f'Описание чата: <strong>{await d.system_message(message.from_user.id)}</strong>', parse_mode='HTML')
 
 
 @dp.message_handler(commands=['chat_history', 'history', 'c_h', 'ch', 'h'])
@@ -69,23 +74,23 @@ async def chat_history(message: types.Message):
 
 @dp.message_handler(commands=['select_chat', 's_c', 'sc', 'selectchat', 'select', 's'])
 async def choose_chat(message: types.Message):
-    chat_list_id = d.chat_list_id(message.from_user.id)
-    chat_list_name = d.chat_list_name(message.from_user.id)
+    chat_list_id = await d.chat_list_id(message.from_user.id)
+    chat_list_name = await d.chat_list_name(message.from_user.id)
     kb = inline(chat_list_name, chat_list_id)
     await message.answer('Выберите чат:', reply_markup=kb)
 
 
 @dp.message_handler(commands=['delete_chat', 'del_chat', 'd_c', 'deletechat', 'delchat', 'dc', 'delete', 'del', 'd'])
 async def del_chat(message: types.Message):
-    active_chat_name = d.active_chat_name(message.from_user.id)
-    d.del_chat(message.from_user.id)
+    active_chat_name = await d.active_chat_name(message.from_user.id)
+    await d.del_chat(message.from_user.id)
     await message.answer(f'Чат {active_chat_name} был удален')
 
 
 @dp.message_handler(commands=['c', 'clear', 'cc', 'c_c', 'clearchat', 'clear_chat'])
 async def clear_chat(message: types.Message):
-    active_chat_name = d.active_chat_name(message.from_user.id)
-    d.clear_chat(message.from_user.id)
+    active_chat_name = await d.active_chat_name(message.from_user.id)
+    await d.clear_chat(message.from_user.id)
     await message.answer(f'Чат {active_chat_name} очищен')
 
 
@@ -93,22 +98,22 @@ async def clear_chat(message: types.Message):
 async def bot_description(message: types.Message):
     args = message.get_args()
     args = args if args != '' else 'You are a smart, helpful, kind, nice, good and very friendly assistant.'
-    sys_m = d.system_message(message.from_user.id)
-    d.system_message_update(args, message.from_user.id)
+    sys_m = await d.system_message(message.from_user.id)
+    await d.system_message_update(args, message.from_user.id)
     await message.answer(f'Описание бота было изменено на <strong>{args}</strong>, \nПрошлое описание: <strong>{sys_m}</strong>', parse_mode="HTML")
 
 
 @dp.message_handler(commands=['t', 'token', 'tok'])
 async def token(message: types.Message):
-    tokens = d.token(message.from_user.id)
+    tokens = await d.token(message.from_user.id)
     await message.answer(f'Вы использовали {tokens} токенов, что эквивалентно {tokens * 0.000002}$')
 
 
 async def handle_chat_history(message: types.Message):
     msg = await message.answer('Генерация ответа 🔄', disable_notification=True)
-    msgs = d.message_data(message.from_user.id) + histor
+    msgs = await d.message_data(message.from_user.id) + histor
     content = await get_message(msgs)
-    d.token_used(message.from_user.id, content['usage']['total_tokens'])
+    await d.token_used(message.from_user.id, content['usage']['total_tokens'])
     await msg.delete()
     await message.reply(content['choices'][0]['message']['content'])
 
@@ -119,12 +124,12 @@ async def message(message: types.Message):
 
 
 async def handle_message(message: types.Message):
-    d.add_message(message.from_user.id, message.text, role='user')
+    await d.add_message(message.from_user.id, message.text, role='user')
     msg = await message.answer('Генерация ответа 🔄', disable_notification=True)
-    msgs = d.message_data(message.from_user.id)
+    msgs = await d.message_data(message.from_user.id)
     content = await get_message(msgs)
-    d.add_message(message.from_user.id, content['choices'][0]['message']['content'])
-    d.token_used(message.from_user.id, content['usage']['total_tokens'])
+    await d.add_message(message.from_user.id, content['choices'][0]['message']['content'])
+    await d.token_used(message.from_user.id, content['usage']['total_tokens'])
     await msg.delete()
     await message.reply(content['choices'][0]['message']['content'])
 
@@ -168,12 +173,15 @@ async def else_(message: types.Message):
 
 # endregion
 # region Callback
+async def callback_is_in(callback_query: types.CallbackQuery, *args, **kwargs):
+    return int(callback_query.data) in await d.chat_list_id(callback_query.from_user.id)
 
-@dp.callback_query_handler(lambda callback_query: int(callback_query.data) in d.chat_list_id(callback_query.from_user.id))
+
+@dp.callback_query_handler(callback_is_in)
 async def callback_handler(callback_query: types.CallbackQuery):
-    d.change_active_chat(callback_query.from_user.id, callback_query.data)
-    await callback_query.message.edit_text(f'Выбран чат: <strong>{d.chat_name_from_id(callback_query.data)}</strong>, \n'
-                                           f'Описание чата: <strong>{d.system_message(callback_query.from_user.id)}</strong>',
+    await d.change_active_chat(callback_query.from_user.id, callback_query.data)
+    await callback_query.message.edit_text(f'Выбран чат: <strong>{await d.chat_name_from_id(callback_query.data)}</strong>, \n'
+                                           f'Описание чата: <strong>{await d.system_message(callback_query.from_user.id)}</strong>',
                                            parse_mode='HTML')
 
 
@@ -181,5 +189,5 @@ async def callback_handler(callback_query: types.CallbackQuery):
 
 
 if __name__ == "__main__":
-    #  webhook_pooling(dp, port, link, [my_id])
-    executor.start_polling(dp, skip_updates=True)
+    #  webhook_pooling(dp, port, link, my_id, loop=loop)
+    executor.start_polling(dp, loop=loop, skip_updates=True)
