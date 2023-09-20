@@ -25,7 +25,7 @@ class DB:
     async def keep_alive(self):
         while True:
             await self.read('SELECT 1;')
-            await asyncio.sleep(14400, loop=self.loop)
+            await asyncio.sleep(14400)
 
     async def do(self, sql, values=()):
         async with self.pool.acquire() as conn:
