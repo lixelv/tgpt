@@ -191,9 +191,7 @@ if __name__ == "__main__":
     #  webhook_pooling(dp, port, link, my_id, loop=loop)
     a = int(input('select webhook or executor 1/2: '))
     if a == 1:
-        from webhook import webhook_pooling
-        print(f'/{link}/{token}')
-        executor.start_webhook(dp, f'/{link}/{token}', host='0.0.0.0', port='8080', loop=loop, skip_updates=True)
+        executor.start_webhook(dp, f'/{link}/{bot._token}', host='0.0.0.0', port='8080', loop=loop, skip_updates=True)
     if a == 2:
         executor.start_polling(dp, loop=loop, skip_updates=True)
 
