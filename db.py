@@ -9,7 +9,7 @@ class DB:
         self.user = user
         self.password = password
         self.db = db
-        self.pool = None
+        loop.run_until_complete(self.initialize())
 
     async def initialize(self):
         self.pool = await aiomysql.create_pool(

@@ -90,7 +90,7 @@ link = env('LINK')
 weather = env('WEATHER')
 bot = Bot(token)
 Bot.set_current(bot)
-dp = Dispatcher(bot, loop=loop)
+dp = Dispatcher(bot)
 
 
 def inline(list_keys: list, list_data: list,

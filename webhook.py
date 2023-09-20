@@ -1,6 +1,4 @@
-from aiogram import Dispatcher, types, executor
-from aiohttp import web
-from asyncio import get_event_loop
+from aiogram import Dispatcher, executor
 
 def webhook_pooling(
         dp: Dispatcher = None,
