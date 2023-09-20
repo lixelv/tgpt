@@ -5,7 +5,7 @@ import asyncio
 class DB:
     def __init__(self, loop, host='localhost', port=3306, user='user', password='password', db='dbname'):
         self.loop = loop
-        self.pool = loop.run_until_complete(self.init_pool(host, port, user, password, db))
+        self.pool = asyncio.run(self.init_pool(host, port, user, password, db))
         loop.create_task(self.keep_alive())
 
 
