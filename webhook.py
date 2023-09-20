@@ -27,6 +27,7 @@ def webhook_pooling(
 
     executor.start_webhook(
         dispatcher=dp,
+        loop=loop,
         webhook_path='/' + api_token,
         on_startup=on_startup,
         on_shutdown=on_shutdown,
