@@ -6,7 +6,7 @@ def webhook_pooling(
         dp: Dispatcher = None,
         port: int | str = None,
         link: str = None,
-        loop = None
+        loop=None
 ):
 
     if not port:
@@ -19,10 +19,10 @@ def webhook_pooling(
 
     api_token = bot._token
 
-    async def on_startup():
+    async def on_startup(dp):
         await bot.set_webhook(f'{link}/{api_token}')
 
-    async def on_shutdown():
+    async def on_shutdown(dp):
         await bot.delete_webhook()
 
     executor.start_webhook(
