@@ -1,8 +1,7 @@
 from db import DB
 from url import *
 from parse_weather import get_weather
-from aiogram import types, executor
-#  from webhook import webhook_pooling
+from aiogram import types
 from random import choice
 import asyncio
 import openai
@@ -190,5 +189,11 @@ async def callback_handler(callback_query: types.CallbackQuery):
 
 if __name__ == "__main__":
     #  webhook_pooling(dp, port, link, my_id, loop=loop)
-    executor.start_polling(dp, loop=loop, skip_updates=True)
+    a = int(input('select webhook or executor 1/2: '))
+    if a == 1:
+        from webhook import webhook_pooling
+        webhook_pooling(dp, port, link, my_id, loop=loop)
+    if a == 2:
+        from aiogram import executor
+        executor.start_polling(dp, loop=loop, skip_updates=True)
 
