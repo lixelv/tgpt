@@ -1,6 +1,6 @@
 from aiogram import Dispatcher, types
 from aiohttp import web
-from asyncio import ProactorEventLoop, get_event_loop
+from asyncio import get_event_loop
 
 def webhook_pooling(
         dp: Dispatcher = None,
