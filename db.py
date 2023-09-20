@@ -1,3 +1,7 @@
+import aiomysql
+import asyncio
+
+
 class DB:
     def __init__(self, loop, host='localhost', port=3306, user='user', password='password', db='dbname'):
         self.loop = loop
