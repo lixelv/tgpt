@@ -9,6 +9,7 @@ import openai
 d = DB(loop, host=db_config['host'], user=db_config['user'], password=db_config['password'], db=db_config['database'])
 loop.run_until_complete(d.initialize())
 
+
 # region Admin
 @dp.message_handler(commands=['b', 'block'])
 async def set_block(message: types.Message):

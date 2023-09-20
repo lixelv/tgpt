@@ -9,12 +9,6 @@ def webhook_pooling(
         loop=None
 ):
 
-    if not port:
-        port = 8080
-
-    if not loop:
-        loop = get_event_loop()
-
     api_token = dp.bot._token
 
     async def on_startup(dp):
