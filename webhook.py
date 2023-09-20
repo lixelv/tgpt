@@ -15,15 +15,13 @@ def webhook_pooling(
     if not loop:
         loop = get_event_loop()
 
-    bot = dp.bot
-
-    api_token = bot._token
+    api_token = dp.bot._token
 
     async def on_startup(dp):
-        await bot.set_webhook(f'{link}/{api_token}')
+        await dp.bot.set_webhook(f'{link}/{api_token}')
 
     async def on_shutdown(dp):
-        await bot.delete_webhook()
+        await dp.bot.delete_webhook()
 
     executor.start_webhook(
         dispatcher=dp,
