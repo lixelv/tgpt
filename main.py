@@ -1,7 +1,7 @@
 from db import DB
 from url import *
 from parse_weather import get_weather
-from aiogram import types
+from aiogram import types, executor
 from random import choice
 import asyncio
 import openai
@@ -192,8 +192,8 @@ if __name__ == "__main__":
     a = int(input('select webhook or executor 1/2: '))
     if a == 1:
         from webhook import webhook_pooling
-        webhook_pooling(dp, port, link, my_id, loop=loop)
+        lnk = link+'/'+bot._token
+        executor.start_webhook(dp, lnk, loop=loop, skip_updates=True)
     if a == 2:
-        from aiogram import executor
         executor.start_polling(dp, loop=loop, skip_updates=True)
 
