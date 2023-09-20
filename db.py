@@ -1,26 +1,31 @@
 import aiomysql
 import asyncio
 
-
 class DB:
     def __init__(self, loop, host='localhost', port=3306, user='user', password='password', db='dbname'):
         self.loop = loop
-        self.pool = asyncio.run(self.init_pool(host, port, user, password, db))
-        loop.create_task(self.keep_alive())
+        self.host = host
+        self.port = port
+        self.user = user
+        self.password = password
+        self.db = db
+        self.pool = None
 
-
-    async def init_pool(self, host, port, user, password, db):
-        pool = await aiomysql.create_pool(
-            host=host, port=port,
-            user=user, password=password,
-            db=db, loop=self.loop
+    async def initialize(self):
+        self.pool = await aiomysql.create_pool(
+            host=self.host,
+            port=self.port,
+            user=self.user,
+            password=self.password,
+            db=self.db,
+            loop=self.loop
         )
-        return pool
+        self.loop.create_task(self.keep_alive())
 
     async def keep_alive(self):
         while True:
-            result = await self.read('SELECT 1;')
-            await asyncio.sleep(14400)
+            await self.read('SELECT 1;')
+            await asyncio.sleep(14400, loop=self.loop)
 
     async def do(self, sql, values=()):
         async with self.pool.acquire() as conn:
@@ -36,6 +41,7 @@ class DB:
                     return await cur.fetchone()
                 else:
                     return await cur.fetchall()
+
 
     # endregion
     # region User
