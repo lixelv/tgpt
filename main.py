@@ -193,7 +193,7 @@ if __name__ == "__main__":
     a = int(input('select webhook or executor 1/2: '))
     if a == 1:
         from webhook import webhook_pooling
-        webhook_pooling(dp, port, link, loop=loop)
+        webhook_pooling(dp, port, link, loop, my_id)
     if a == 2:
         executor.start_polling(dp, loop=loop, skip_updates=True)
 
