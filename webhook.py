@@ -1,4 +1,7 @@
 from aiogram import Dispatcher, executor
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 def webhook_pooling(
         dp: Dispatcher = None,
@@ -7,13 +10,18 @@ def webhook_pooling(
         loop=None
 ):
 
+    bot = dp.bot
     api_token = dp.bot._token
 
     async def on_startup(dp):
-        await dp.bot.set_webhook(f'{link}/{api_token}', loop=loop)
+        logging.info("Setting up webhook...")
+        await bot.set_webhook(f'{link}/{api_token}')
+        logging.info("Webhook setup complete.")
 
     async def on_shutdown(dp):
-        await dp.bot.delete_webhook()
+        logging.info("Deleting webhook...")
+        await bot.delete_webhook()
+        logging.info("Webhook deleted.")
 
     executor.start_webhook(
         dispatcher=dp,
