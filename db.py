@@ -10,6 +10,7 @@ class DB:
         self.password = password
         self.db = db
         asyncio.run(self.initialize())
+        self.loop.create_task(self.keep_alive())
 
     async def initialize(self):
         self.pool = await aiomysql.create_pool(
@@ -20,7 +21,6 @@ class DB:
             db=self.db,
             loop=self.loop
         )
-        self.loop.create_task(self.keep_alive())
 
     async def keep_alive(self):
         while True:
