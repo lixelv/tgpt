@@ -5,20 +5,15 @@ import asyncio
 class DB:
     def __init__(self, loop, host='localhost', port=3306, user='user', password='password', db='dbname'):
         self.loop = loop
-        self.host = host
-        self.port = port
-        self.user = user
-        self.password = password
-        self.db = db
-        self.loop.create_task(self.initialize())
+        self.loop.create_task(self.initialize(host, port, user, password, db))
 
-    async def initialize(self):
+    async def initialize(self, host, port, user, password, db):
         self.pool = await aiomysql.create_pool(
-            host=self.host,
-            port=self.port,
-            user=self.user,
-            password=self.password,
-            db=self.db,
+            host=host,
+            port=port,
+            user=user,
+            password=password,
+            db=db,
             loop=self.loop
         )
         self.loop.create_task(self.keep_alive())
