@@ -120,6 +120,7 @@ class DB:
         return len(await self.read('SELECT * FROM message WHERE chat_id = %s', (chat_id,)))
 
     async def add_message(self, user_id: int, content: str, role='assistant'):
+        await self.start_chat(user_id)
         await self.do('INSERT INTO message(chat_id, text, role) VALUES((SELECT id FROM chat WHERE user_id = %s AND active = 1),%s,%s)', (user_id, content, role))
 
 
