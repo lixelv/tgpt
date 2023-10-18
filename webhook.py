@@ -76,9 +76,11 @@ async def on_startup(dp, startup_message, admin_list, webhook_path):
     await dp.bot.set_webhook(webhook_path)
 
     # Send the startup message to the specified admin_list
-    await start_shutdown(dp.bot, startup_message, admin_list)
+    pass
+    # await start_shutdown(dp.bot, startup_message, admin_list)
 
 
 async def on_shutdown(dp, shutdown_message, admin_list):
     # Send the shutdown message to the specified admin_list
-    await start_shutdown(dp.bot, shutdown_message, admin_list)
+    pass
+    # await start_shutdown(dp.bot, shutdown_message, admin_list)
