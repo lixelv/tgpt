@@ -197,6 +197,9 @@ if __name__ == "__main__":
         while True:
             try:
                 webhook_pooling(dp, port, link, loop, my_id)
+            except KeyboardInterrupt:
+                print("Выход...")
+                break
             except Exception as e:
                 print(e)
                 sleep(240)
@@ -205,6 +208,9 @@ if __name__ == "__main__":
         while True:
             try:
                 executor.start_polling(dp, skip_updates=True)
+            except KeyboardInterrupt:
+                print("Выход...")
+                break
             except Exception as e:
                 print(e)
                 sleep(240)
