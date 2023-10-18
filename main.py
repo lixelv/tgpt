@@ -6,7 +6,13 @@ from aiogram import types, executor
 from random import choice
 import asyncio
 import openai
+import signal
+import os
 
+def signal_handler(sig, frame):
+    print("Выход...")
+    os.kill(os.getpid(), signal.SIGTERM)
+    
 d = DB(loop, host=db_config['host'], user=db_config['user'], password=db_config['password'], db=db_config['database'])
 
 # region Admin
@@ -190,6 +196,7 @@ async def callback_handler(callback_query: types.CallbackQuery):
 
 if __name__ == "__main__":
     asyncio.set_event_loop(loop)
+    signal.signal(signal.SIGINT, signal_handler)
 
     a = int(input('select webhook or executor 1/2: '))
     if a == 1:
@@ -197,9 +204,7 @@ if __name__ == "__main__":
         while True:
             try:
                 webhook_pooling(dp, port, link, loop, my_id)
-            except KeyboardInterrupt:
-                print("Выход...")
-                break
+
             except Exception as e:
                 print(e)
                 sleep(240)
@@ -208,9 +213,7 @@ if __name__ == "__main__":
         while True:
             try:
                 executor.start_polling(dp, skip_updates=True)
-            except KeyboardInterrupt:
-                print("Выход...")
-                break
+
             except Exception as e:
                 print(e)
                 sleep(240)
