@@ -1,4 +1,5 @@
 from db import DB
+from time import sleep
 from url import *
 from parse_weather import get_weather
 from aiogram import types, executor
@@ -193,7 +194,17 @@ if __name__ == "__main__":
     a = int(input('select webhook or executor 1/2: '))
     if a == 1:
         from webhook import webhook_pooling
-        webhook_pooling(dp, port, link, loop, my_id)
-    if a == 2:
-        executor.start_polling(dp, loop=loop, skip_updates=True)
+        while True:
+            try:
+                webhook_pooling(dp, port, link, loop, my_id)
+            except Exception as e:
+                print(e)
+                sleep(240)
 
+    if a == 2:
+        while True:
+            try:
+                executor.start_polling(dp, skip_updates=True)
+            except Exception as e:
+                print(e)
+                sleep(240)
