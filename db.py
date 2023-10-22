@@ -3,6 +3,7 @@ import asyncio
 
 
 class DB:
+    # region Stuff 
     def __init__(self, loop, host='localhost', port=3306, user='user', password='password', db='dbname'):
         self.loop = loop
         self.loop.create_task(self.initialize(host, port, user, password, db))
@@ -112,7 +113,7 @@ class DB:
 
     async def clear_chat(self, user_id: int):
         chat_id = await self.active_chat_id(user_id)
-        await self.do('UPDATE message WHERE id = &s;', (chat_id,))
+        await self.do('UPDATE message SET hidden = 1 WHERE id = &s;', (chat_id,))
 
     # endregion
     # region Message
