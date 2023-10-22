@@ -60,8 +60,8 @@ async def check_subscription(message: types.Message):
             return False
         else:
             return True
-    except (ChatNotFound, UserDeactivated, BadRequest):
-        ic()
+    except (ChatNotFound, UserDeactivated, BadRequest) as e:
+        ic(e)
         return True
 
 @dp.message_handler(check_subscription)
