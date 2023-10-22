@@ -107,7 +107,7 @@ class DB:
 
     async def del_chat(self, user_id: int):
         await self.clear_chat(user_id)
-        await self.do('UPDATE chat SET hidden = 1 WHERE id = (SELECT id FROM chat WHERE user_id = %s and active = 1); ', (user_id,))
+        await self.do('UPDATE chat SET hidden = 1 WHERE user_id = %s and active = 1; ', (user_id,))
         await self.set_chat_active_after_del(user_id)
 
     async def clear_chat(self, user_id: int):
