@@ -1,18 +1,22 @@
-from db import DB
-from time import sleep
-from url import *
-from parse_weather import get_weather
-from aiogram import types, executor
-from random import choice
 import asyncio
 import openai
 import signal
 import os
 
+from db import DB
+from time import sleep
+from url import *
+from parse_weather import get_weather
+from aiogram import types, executor
+from aiogram.utils.exceptions import UserDeactivated, ChatNotFound, BadRequest
+from random import choice
+
+channel_id = -1001743933407
+
 def signal_handler(sig, frame):
     print("Выход...")
     os.kill(os.getpid(), signal.SIGTERM)
-    
+
 d = DB(loop, host=db_config['host'], user=db_config['user'], password=db_config['password'], db=db_config['database'])
 
 # region Admin
@@ -47,6 +51,22 @@ async def user_exists(message: types.Message):
 async def is_user_blocked(message: types.Message, *args, **kwargs):
     return await d.is_blocked(message.from_user.id)
 
+async def check_subscription(message: types.Message):
+    try:
+        member = await bot.get_chat_member(chat_id=channel_id, user_id=message.from_user.id)
+        if member.status in ["member", "creator", "administrator"]:
+            return False
+        else:
+            return True
+    except (ChatNotFound, UserDeactivated, BadRequest):
+        return True
+
+@dp.message_handler(check_subscription)
+async def unsubscribed(message: types.Message):
+    markup = InlineKeyboardMarkup()
+    subscribe_button = InlineKeyboardButton("Подписаться на канал", url="https://t.me/+LGU8GULoBVphMWRi")
+    markup.add(subscribe_button)
+    await message.reply("Подпишитесь на наш канал!", reply_markup=markup)
 
 @dp.message_handler(is_user_blocked)
 async def love(message: types.Message):

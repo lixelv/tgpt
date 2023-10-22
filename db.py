@@ -118,7 +118,7 @@ class DB:
     # region Message
 
     async def default_system_message(self) -> str:
-        result = await self.do('SELECT description FROM chat WHERE id = 119')
+        result = (await self.read('SELECT description FROM chat WHERE id = 119', one=True))[0]
 
     async def message_count(self, chat_id: int) -> int:
         return len(await self.read('SELECT * FROM message WHERE chat_id = %s', (chat_id,)))
