@@ -111,10 +111,8 @@ class DB:
         await self.set_chat_active_after_del(user_id)
 
     async def clear_chat(self, user_id: int):
-        await self.do('''UPDATE message
-            JOIN chat ON message.chat_id = chat.id
-            SET message.hidden = 1
-            WHERE chat.user_id = %s AND chat.active = 1;''', (user_id,))
+        chat_id = await self.active_chat_id(user_id)
+        await self.do('UPDATE message WHERE id = &s;', (chat_id,))
 
     # endregion
     # region Message
