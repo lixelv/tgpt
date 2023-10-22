@@ -100,7 +100,8 @@ class DB:
         return result[0] if result is not None else None
 
     async def set_chat_active_after_del(self, user_id: int):
-        await self.do('UPDATE chat SET active = 1 WHERE id = (SELECT MAX(id) FROM chat WHERE user_id = %s)', (user_id,))
+        chat_id = (self.read('SELECT MAX(id) FROM chat WHERE user_id = %s;', (user_id,)))
+        await self.do('UPDATE chat SET active = 1 WHERE id = %s', (chat_id,))
 
     async def change_active_chat(self, user_id: int, chat_id: int):
         await self.do('UPDATE chat SET active = 0 WHERE active = 1 and user_id = %s', (user_id,))
