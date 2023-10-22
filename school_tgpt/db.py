@@ -74,11 +74,11 @@ class DB:
 
 
     async def chat_list_id(self, user_id: int) -> list:
-        result = await self.read('SELECT id FROM chat WHERE user_id = %s', (user_id,))
+        result = await self.read('SELECT id FROM chat WHERE user_id = %s and hidden = 0', (user_id,))
         return [row[0] for row in result]
 
     async def chat_list_name(self, user_id: int) -> list:
-        result = await self.read('SELECT name FROM chat WHERE user_id = %s', (user_id,))
+        result = await self.read('SELECT name FROM chat WHERE user_id = %s and hidden = 0', (user_id,))
         return [row[0] for row in result]
 
     async def start_chat(self, user_id: int):
@@ -100,7 +100,8 @@ class DB:
         return result[0] if result is not None else None
 
     async def set_chat_active_after_del(self, user_id: int):
-        await self.do('UPDATE chat SET active = 1 WHERE id = (SELECT MAX(id) FROM chat WHERE user_id = %s)', (user_id,))
+        chat_id = (await self.read('SELECT MAX(id) FROM chat WHERE user_id = %s and hidden = 0;', (user_id,), one=True))[0]
+        await self.do('UPDATE chat SET active = 1 WHERE id = %s', (chat_id,))
 
     async def change_active_chat(self, user_id: int, chat_id: int):
         await self.do('UPDATE chat SET active = 0 WHERE active = 1 and user_id = %s', (user_id,))
