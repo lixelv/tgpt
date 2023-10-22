@@ -4,6 +4,7 @@ import signal
 import os
 
 from db import DB
+from icecream import ic
 from time import sleep
 from url import *
 from parse_weather import get_weather
@@ -54,11 +55,13 @@ async def is_user_blocked(message: types.Message, *args, **kwargs):
 async def check_subscription(message: types.Message):
     try:
         member = await bot.get_chat_member(chat_id=channel_id, user_id=message.from_user.id)
+        ic(member.status)
         if member.status in ["member", "creator", "administrator"]:
             return False
         else:
             return True
     except (ChatNotFound, UserDeactivated, BadRequest):
+        ic()
         return True
 
 @dp.message_handler(check_subscription)
