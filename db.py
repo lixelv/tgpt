@@ -113,7 +113,7 @@ class DB:
 
     async def clear_chat(self, user_id: int):
         chat_id = await self.active_chat_id(user_id)
-        await self.do('UPDATE message SET hidden = 1 WHERE id = &s;', (chat_id,))
+        await self.do('UPDATE message SET hidden = 1 WHERE id = %s;', (chat_id,))
 
     # endregion
     # region Message
@@ -158,3 +158,5 @@ class DB:
         return result[0]
 
     # endregion
+
+
