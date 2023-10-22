@@ -84,3 +84,4 @@ async def on_shutdown(dp, shutdown_message, admin_list):
     # Send the shutdown message to the specified admin_list
     pass
     # await start_shutdown(dp.bot, shutdown_message, admin_list)
+

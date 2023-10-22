@@ -115,3 +115,4 @@ def inline(list_keys: list, list_data: list,
 #     for i in wrapped_text:
 #         result += i + '\n'
 #     return result[:-2]
+

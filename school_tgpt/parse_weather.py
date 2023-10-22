@@ -16,3 +16,4 @@ def get_weather(lat: float, lon: float):
                f'Закат: {datetime.datetime.fromtimestamp(data["sys"]["sunset"]).strftime("%H:%M:%S")}'
     except Exception as err:
         return f'Ошибка: {err}'
+
