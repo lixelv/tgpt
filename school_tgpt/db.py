@@ -56,6 +56,9 @@ class DB:
 
     # endregion
     # region Chat
+    async def default_system_message(self) -> str:
+        result = await self.do('SELECT description FROM chat WHERE id = 119')
+    
     async def system_message(self, user_id: int) -> str:
         result = await self.read('SELECT description FROM chat WHERE active = 1 and user_id = %s', (user_id,), one = True)
         return result[0]

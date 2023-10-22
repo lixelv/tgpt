@@ -111,10 +111,16 @@ class DB:
         await self.set_chat_active_after_del(user_id)
 
     async def clear_chat(self, user_id: int):
-        await self.do('UPDATE message SET hidden = 1 WHERE chat_id = (SELECT id FROM chat WHERE user_id = %s and active = 1)', (user_id,))
+        await self.do('''UPDATE message
+            JOIN chat ON message.chat_id = chat.id
+            SET message.hidden = 1
+            WHERE chat.user_id = %s AND chat.active = 1;''', (user_id,))
 
     # endregion
     # region Message
+
+    async def default_system_message(self) -> str:
+        result = await self.do('SELECT description FROM chat WHERE id = 119')
 
     async def message_count(self, chat_id: int) -> int:
         return len(await self.read('SELECT * FROM message WHERE chat_id = %s', (chat_id,)))

@@ -103,7 +103,7 @@ async def clear_chat(message: types.Message):
 @dp.message_handler(commands=['description', 'cd', 'chat_description', 'c_d', 'chatdescripion', 'desc'])
 async def bot_description(message: types.Message):
     args = message.get_args()
-    args = args if args != '' else 'You are a smart, helpful, kind, nice, good and very friendly assistant.'
+    args = args if args != '' else await d.default_system_message()
     sys_m = await d.system_message(message.from_user.id)
     await d.system_message_update(args, message.from_user.id)
     await message.answer(f'Описание бота было изменено на <strong>{args}</strong>, \nПрошлое описание: <strong>{sys_m}</strong>', parse_mode="HTML")
