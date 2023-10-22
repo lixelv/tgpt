@@ -12,7 +12,7 @@ from aiogram import types, executor
 from aiogram.utils.exceptions import UserDeactivated, ChatNotFound, BadRequest
 from random import choice
 
-channel_id = -1001743933407
+channel_id = "-1001743933407"
 
 def signal_handler(sig, frame):
     print("Выход...")
@@ -55,13 +55,11 @@ async def is_user_blocked(message: types.Message, *args, **kwargs):
 async def check_subscription(message: types.Message):
     try:
         member = await bot.get_chat_member(chat_id=channel_id, user_id=message.from_user.id)
-        ic(member.status)
         if member.status in ["member", "creator", "administrator"]:
             return False
         else:
             return True
     except (ChatNotFound, UserDeactivated, BadRequest) as e:
-        ic(e)
         return True
 
 @dp.message_handler(check_subscription)
