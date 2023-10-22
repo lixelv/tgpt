@@ -51,23 +51,6 @@ async def user_exists(message: types.Message):
 async def is_user_blocked(message: types.Message, *args, **kwargs):
     return await d.is_blocked(message.from_user.id)
 
-async def check_subscription(message: types.Message):
-    try:
-        member = await bot.get_chat_member(chat_id=channel_id, user_id=message.from_user.id)
-        if member.status in ["member", "creator", "administrator"]:
-            return False
-        else:
-            return True
-    except (ChatNotFound, UserDeactivated, BadRequest):
-        return True
-
-@dp.message_handler(check_subscription)
-async def unsubscribed(message: types.Message):
-    markup = InlineKeyboardMarkup()
-    subscribe_button = InlineKeyboardButton("Подписаться на канал", url="https://t.me/+LGU8GULoBVphMWRi")
-    markup.add(subscribe_button)
-    await message.reply("Подпишитесь на наш канал!", reply_markup=markup)
-
 @dp.message_handler(is_user_blocked)
 async def love(message: types.Message):
     await message.answer('Вы заблокированы!')
